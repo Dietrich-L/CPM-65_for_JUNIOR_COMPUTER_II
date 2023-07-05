@@ -1,0 +1,23 @@
+#Junior Computer II CPM-65
+diskdef JC II
+  seclen 256
+  tracks 128
+  sectrk 32
+  blocksize 2048
+  maxdir 128
+  skew 0
+  boottrk 2
+  os 2.2
+end
+
+#ELEKTOR Junior Computer CPM-65
+diskdef JC
+  seclen 256
+  tracks 80
+  sectrk 16
+  blocksize 1024
+  maxdir 128
+  skew 0
+  boottrk 2
+  os 2.2
+end
