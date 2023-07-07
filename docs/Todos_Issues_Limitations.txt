@@ -1,0 +1,15 @@
+ToDo's, Issues & Limitations
+
+ToDo's
+Write Bootloader
+define a mechanism to tell CPM-65 which images are mounted for each drive
+
+Issues
+
+
+
+
+Limitations
+max. 48kB RAM supported --> 43kB RAM for TPA
+max. 4 drives A: - D: non consecutive
+
