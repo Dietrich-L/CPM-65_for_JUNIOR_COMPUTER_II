@@ -17,21 +17,23 @@ DIRBFV	= $FC		;DIRBF-VECTOR
 BIOSP	= $FA		;BIOS-POINTER
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
+MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
+PLBA	= $DF		;LBA Buffer
 
 ;SYSTEM CONSTANTS
 
 BLKBUF	=  $600		;default buffer
 
-CCP	= $AC00
-BEGIN	= $B800
+CCP	= $CC00
+BEGIN	= $D800
 
-CGET = $E04D			;CGET
-ROM_CONIN = $E047		;CIN
-ROM_CONOUT = $E044		;BOUT
-SD_RD_LBLK_BUF = $F458		;load sector in LBA to BLKBUF
-SD_WR_LBLK_BUF = $f48B		;save sector in BLKBUF to LBA
+CGET = $E04D		;CGET
+ROM_CONIN = $E047	;CIN
+ROM_CONOUT = $E044	;BOUT
+SD_RD_LBLK_BUF = $F45F	;load sector in LBA to BLKBUF
+SD_WR_LBLK_BUF = $F492	;save sector in BLKBUF to LBA
 
-ROM_MONITOR = $E000		;Monitor cold start
+ROM_MONITOR = $E000	;Monitor cold start
 
 ;CONTROL CODES
 
@@ -57,9 +59,9 @@ SPBDIV	= 3		;LOG(2) SPB
 SYS	= 32		;SYSTEM sectors
 BPD	= MAXTRK*SPT-SYS/SPB-1	;BLOCKS PER DISK
 DIRSCS	= 32		;DIRECTORY SECTORS
-DIRMSK	= %11000000	;DIR MASK FOR BAT
+DIRMSK	= %11110000	;DIR MASK FOR BAT
 RPEXT	= 8*SPB*2 	;RECORD PER EXTENT
-BATSIZ	= BPD/8		;SIZE OF BAT
+BATSIZ	= BPD/8		;SIZE OF BAT (64 bytes)
 
 ;==========================================
 
@@ -88,6 +90,7 @@ FBIOS	JMP BOOT		; 00
 
 IMGTAB	DS 4*4		;Base Sector address of disk images mounted
 IMGSTAT	DS 4,0		;Flag $FF valid image, $00 no image
+BMODE	DB $FF		;SD card mode
 
 ;Disk parameter block
 
@@ -105,7 +108,7 @@ DPHA	DW DIRBF	;DISK PARAMETER HEADER
 	DB BATSIZ
 
 
-BAT	DB %10000000	;Block Allocation Table Drive A-D
+BAT	DB %11110000	;Block Allocation Table Drive A-D
 	DS BATSIZ	;max. 1 page
 
 DRIVE	DB 0		;active drive
@@ -114,7 +117,7 @@ SECS	DS 4,0		;CPM-65 sector #, Byte 4 is not used
 
 ;--- buffer for SD CARD
 
-LBA	DS 4
+LBA	DS 4		;LSB ... MSB
 LBA_B	DS 4
 LBA_F	DB 0		;LBA FLAG BIT7 = dirty
 
@@ -126,6 +129,8 @@ BOOT	LDA #$4C		;SET JMP BDOS
 	STA JPBDOS+1
 	LDA #CCP/256
 	STA JPBDOS+2
+	LDA MODE		;save mode byte
+	STA BMODE
 	JSR HOME		;HOME BOOT DISK
 	LDA DRIVE		;SELECT BOOT DRIVE
 	LDX #$0E		;VIA BDOS
@@ -270,25 +275,31 @@ SETLBA	LDX DRIVE
 	TXA		;Drive*4 = pnt for base LBA
 	LSR A
 	LSR A
-	TAX
+	PHA		;save X
+	TAX		;start with LSB+2
+	INX
+	INX
 	LDY #2
 	CLC
 SETLBA0	LDA SECS,Y	;SECS/2
 	ROR A
-	STA LBA,Y
+	STA LBA,X
+	DEX
 	DEY
 	BPL SETLBA0
-	INY
-	TYA
-SETLBA1	ROR A		;set C from A Bit0
-	LDA LBA,Y	;LBA = IMGTAB + SECS/2
+	INY		;Y=0
+	PLA
+	TAX		;restore IMGTAB pointer
+	CLC
+SETLBA1	LDA LBA,Y	;LBA = IMGTAB + SECS/2
 	ADC IMGTAB,X
 	STA LBA,Y
 	INX
 	INY
-	ROL A		;save C in A Bit0
 	CPY #4
 	BCC SETLBA1
+	LDA BMODE	;set mode byte
+	STA MODE
 	CLC
 	RTS
 

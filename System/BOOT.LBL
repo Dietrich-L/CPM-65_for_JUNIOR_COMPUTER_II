@@ -1,0 +1,24 @@
+BOOT_X                           $06FE  BOOT4                            $06F3  
+B_ERR                            $06F1  BOOT6                            $06EE  
+BOOT7                            $06E5  BOOT5                            $06D8  
+BOOT1                            $06C5  BOOT2                            $06BD  
+BOOT3                            $06AD  BOOT                             $06AB  
+ERRM                             $069B  BOOTM                            $066F  
+IMGSTAT                          $066B  IMGTAB                           $065B  
+ID_NFND                          $00F3  NO_DEV                           $00F4  
+I2CERROR                         $00F5  SD_ERROR                         $00F6  
+INVDRV                           $00F9  ROM_MONITOR                      $E000  
+SD_WR_LBLK                       $F495  SD_RD_LBLK                       $F462  
+PRTCHR                           $E044  EOT                              $0000  
+LF                               $000A  CR                               $000D  
+BIOS                             $D800  CCP                              $CC00  
+TPA                              $2000  BOOTBEG                          $0658  
+OFFSET                           $0058  BLKBUF                           $00DC  
+PLBA                             $00E6  DMA                              $00FE  
+LBA                              $0000  VERSION                          $0001  
+$0658  
+OFFSET                           $0058  BLKBUF                 $0010  
+$0658  
+OFFSET                           $0058  BLKBUF                           $00DC  
+PLBA                             $00E6  DMA                              $00FE  
+LBA                              $0000  VERSION             
