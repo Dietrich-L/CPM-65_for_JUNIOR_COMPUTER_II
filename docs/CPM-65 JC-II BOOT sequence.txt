@@ -1,0 +1,14 @@
+JUNIOR Computer II
+CPM-65 Bootsequence
+
+Steps:
+1. load sector 0 of CPM-65 Disk to $600. The BOOT code starts at $600 + Offset ($58)
+2. CCP, BDOS and BIOS are loaded to their locatuions in memory. The CPM-65 disk must contain the respective code in the correct Sectors Offset $000001 .. $00000B. It is assumed, that the disc image is not fragmented and stored in consecutive sectors on the SD
+3. BOOT patches the LBA of its sector $000000 into the BIOS Image map as drive A: and marks this entry as valid
+4. Finally BOOT jumps to the BIOS cold start sequence, which then starts CPM-65 - hopefully...
+
+Comment
+This very primitive sequence allows only 1 Drive - A:
+It relies on a ROM routine, which loads the 1. sector of the image to $600 and transfers control to $600+OFFSET
+
+Future versions will have to implement more sophisticated mechanisms to select the disk images used for CPM-65
