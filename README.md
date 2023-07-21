@@ -29,7 +29,8 @@ CPM-65 consists of 3 layers:
 Filenames are CP/M-style d:filename.ext with d &lt;Drive A-H&gt;
 Programs must have .COM as extension and are loaded to $2000 and started there.
 
-The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
+The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a
+href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer" title="CIFE">CIFE</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
 
 The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in the BIOS. The BDOS operates on sector numbers. 
 
