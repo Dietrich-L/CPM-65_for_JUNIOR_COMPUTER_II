@@ -17,7 +17,7 @@ diskdef JC-II
   sectrk 32
   blocksize 2048
   extentsize 16384
-  maxdir 128
+  maxdir 256
   skew 0
   boottrk 1
   os 2.2
