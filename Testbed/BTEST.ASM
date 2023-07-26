@@ -1,8 +1,9 @@
 ;BOOT.COM -- CP/M-65 SD BOOT UTILITY JC Version
 ;BY D. LAUSBERG	 (C)1988
 ;V1.0	21.07.23
+;V1.1	26.07.23	;$CC00 version
 
-VERSION	= $10
+VERSION	= $11
 
 ;SYSTEM CONSTANTS
 DMA	=  $FE
@@ -14,9 +15,9 @@ INBUF	=  $EC
 CCPV	=  $DE
 
 TPA	= $200
-CCP	= $AC00
-BIOS	= $B800
-ROM_MONITOR = $C000	;Monitor cold start
+CCP	= $CC00
+BIOS	= $D800
+ROM_MONITOR = $E000	;Monitor cold start
 
 PRTCHR	= $F80C
 

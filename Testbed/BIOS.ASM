@@ -1,10 +1,11 @@
 ;CPM-65 BIOS for JC II
-;Testversion JC
+;Testversion JC $D800
 ;D. LAUSBERG	(C) 1987
 
 ;V0.1	06.07.23	JC II version, erster Anlauf
+;V0.2	26.07.23	error corrections - SETLBA, SD_ERROR
 
-VERSION	= $01		;VERSION NUMBER
+VERSION	= $02		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -20,18 +21,18 @@ DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
 MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
 
-PLBA	= $D7	;LBA Pointer
+PLBA	= $E4	;LBA Pointer
 
-XBUF	= $D9
-YBUF	= $DA
-TEMP	= $DB   ;temp storage
+XBUF	= $DF
+YBUF	= $DE
+TEMP	= $DD   ;temp storage
 
 ;SYSTEM CONSTANTS
 
 BLKBUF	=  $600		;default buffer
 
-CCP	= $AC00
-BEGIN	= $B800
+CCP	= $CC00
+BEGIN	= $D800
 
 ;CGET = $E04D		;CGET
 CONST	= $F806
@@ -209,7 +210,13 @@ AUXOUT	RTS
 AUXIN	RTS
 
 
-HOME	RTS
+HOME	;JSR SD_INIT
+;	BCC HOMEX
+;	CLC
+;	RTS
+
+;HOMEX	SEC
+	RTS
 
 
 SELDSK	CMP #4			;TEST FOR DRIVE A to D
@@ -241,11 +248,11 @@ SETTRK	LDA #$FB		;Sector not found
 	RTS
 
 
-READ	JSR SETLBA		;SET LBA = IMGTAB + SECS
+READ	JSR SETLBA		;SET LBA = IMGTAB + SECS/2
 	JSR CHKBLK		;CHECK IF BLOCK VALID
 	BCC SD_RD1
 	JSR S_READ
-	BCS SD_RDX
+	BCS SD_RD4
 SD_RD1	LDA SECS
 	LSR A
 	LDY #0
@@ -262,14 +269,20 @@ SD_RD3	LDA BLKBUF+256,Y
 	INY
 	BNE SD_RD3
 	CLC
-SD_RDX	RTS
+	RTS
+
+SD_RD4	JSR SD_INIT		;on error retry
+	BCS READ
+	LDA #NO_SD
+	SEC
+	RTS
 
 
 WRITE	JSR SETLBA		;WRITE SD card
 	JSR CHKBLK
 	BCC SD_WR1
 	JSR S_READ		;write implicitely
-	BCS SD_WRX		;when SD buffer dirty
+	BCS SD_WRE		;when SD buffer dirty
 SD_WR1	LDA SECS
 	LSR A
 	LDY #0
@@ -294,9 +307,15 @@ SD_WR4	LDA #$80
 	CMP #SYS+DIRSCS		
 	BCS SD_WR5
 	JSR SD_WB		;then write SD block immediate
-SD_WRX	RTS
+	RTS
 
 SD_WR5	CLC
+	RTS
+
+SD_WRE	JSR SD_INIT		;on error 1 retry
+	BCS WRITE
+	LDA #NO_SD
+	SEC
 	RTS
 
 
@@ -355,6 +374,8 @@ SETLBA0	LDA SECS,Y	;SECS/2
 	DEY
 	BPL SETLBA0
 	INY		;Y=0
+	LDA #4
+	STA TEMP	;counter for addition
 	PLA
 	TAX		;restore IMGTAB pointer
 	CLC
@@ -363,8 +384,8 @@ SETLBA1	LDA LBA,Y	;LBA = IMGTAB + SECS/2
 	STA LBA,Y
 	INX
 	INY
-	CPY #4
-	BCC SETLBA1
+	DEC TEMP
+	BNE SETLBA1
 	CLC
 	RTS
 
