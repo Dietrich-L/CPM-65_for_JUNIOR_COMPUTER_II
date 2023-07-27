@@ -3,20 +3,23 @@
 
 ;Bootstrap Lader fuer den CP/M-Bootsector
 
-;V0.0	12.07.23
-Version = $01
+;V0.1	12.07.23
+;V1.0	25.07.23	BIOS MOUNT command
+;V1.1	26.07.23	;$CC00 version
+;V1.2	27.07.23	;code improvements
+Version = $12
 
 ;Parameter
 
-LBA	= $00
+DRIVE	= $00
+LBA	= $01		;LSB ... MSB
+LBA_B	= $05
 
 
 DMA	= $FE
-PLBA	= $E6		;Pointer to LBA
-BLKBUF	= $DC		;BLKBUF adr for SD	
+NUM32	= $F8     	;LBA vector to 1. Cluster of disc image
 
-OFFSET	= $58
-BOOTBEG	= $600+OFFSET
+BLKBUF	= $DC		;BLKBUF adr for SD	
 
 TPA	= $2000
 CCP	= $CC00
@@ -36,52 +39,25 @@ SD_WR_LBLK = $F495	;save sector in BLKBUF to (BLKBUF)
 
 ROM_MONITOR = $E000	;Monitor cold start
 
-;ERROR CODES
 
-INVDRV	= $F9		;invalid drive
-SD_ERROR = $F6
-I2CError = $F5
-NO_DEV	= $F4
-ID_NFND	= $F3
-
-;--------------------------------------------
-
-	ORG BOOTBEG
-
-	JMP BOOT
-
-;---  CP/M-65 BIOS disk image table  -------------------
-
-IMGTAB	DS 4*4		;Base Sector address of disk images mounted
-IMGSTAT	DS 4,0		;Flag $FF valid image, $00 no image
-
-
-;---  MESSAGES  -----------------------------
-
-BOOTM	DB CR,LF,'CP/M-65 for JC-II Bootstrap Loader V'
-	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,EOT
-ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
-
-;--------------------------------------------
+	ORG TPA
 
 BOOT	LDY #3			;set LBA to current file
-BOOT3	LDA (PLBA),Y
+BOOT3	LDA (NUM32),Y
 	STA LBA,Y
-	STA IMGTAB,Y		;also make a copy
+	STA LBA_B,Y		;also make a copy
 	DEY
 	BPL BOOT3
-	LDA #$FF
-	STA IMGSTAT		;make A: valid
 
 BOOT2	LDA #CCP		;and boot it
 	STA BLKBUF
 	LDA #CCP/256
 	STA BLKBUF+1
-BOOT1	LDX #LBA
-	LDY #LBA/256
+BOOT1	LDX #LBA_B
+	LDY #LBA_B/256
 	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
 	BCC B_ERR
-	INC LBA
+	JSR INCLBA
 	LDA BLKBUF+1
 	CMP #ROM_MONITOR/256	;all sector read?
 	BCC BOOT1
@@ -92,11 +68,10 @@ BOOT5	LDA BOOTM,Y		;print boot message
 	INY
 	BNE BOOT5
 
-	LDX #BOOTM-IMGTAB
-BOOT7	LDA IMGTAB,X		;set LBA table in BIOS
-	STA BIOS+$33,X
-	DEX
-	BPL BOOT7
+	LDA #0			;A: in $00..$04
+	STA DRIVE
+	JSR $11*3+BIOS		;mount A:
+	BCS B_ERR
 BOOT6	JMP BIOS		;COLD BOOT
 
 B_ERR	LDY #0
@@ -107,6 +82,23 @@ BOOT4	LDA ERRM,Y		;print error message
 	BNE BOOT4
 
 BOOT_X	JMP ROM_MONITOR		;and fall back to Monitor
+
+
+INCLBA	LDX #0			;LBA = LBA+1
+INCLBA1	INC LBA_B,X
+	BNE INCLBAX
+	INX
+	CPX #4
+	BCC INCLBA1
+INCLBAX	RTS
+
+;---  MESSAGES  -----------------------------
+
+BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Loader V'
+	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,EOT
+ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
+
+;--------------------------------------------
 
 
 	END
