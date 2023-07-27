@@ -1,0 +1,65 @@
+; *****************************************************************************
+; Junior Computer ][ Print And Hex Monitor Version 1.0.5
+; Page Zero Cells
+; ***************************************************************************** 
+
+IOBASE		EQU	$14		; pointer to IO card base
+IOBASEL		EQU	$14		; always $00
+IOBASEH		EQU	$15		; K2 = $08, K3 = $0C, K4 = $10
+					; --- long term storage
+
+; ACIA And Terminal Variables *************************************************
+
+PSTR      	EQU   	$EA      	; output string Pointer
+PSTRL     	EQU   	$EA      	; lower address byte of output string pointer
+PSTRH     	EQU   	$EB      	; upper address byte of output string pointer   
+WBUF      	EQU   	$EC      	; ACIA character output buffer
+					; --- not used by BIOS ROM
+
+; Device Driver Variables *****************************************************
+
+PDEV		EQU	$DE		; device descriptor pointer
+PDEVL    	EQU   	$DE      	; device descriptor pointer lo byte
+PDEVH    	EQU   	$DF      	; device descriptor pointer hi byte
+					; --- not critical
+
+; TTY Variables ***************************************************************
+
+BAUDRATE  	EQU   	$E0    		; current baud rate
+					;--- not critical
+
+; SPI/SD-Card Reader Variables ************************************************
+
+SD_TYPE		EQU	$1A		; SD Card Type
+					; --- long term storage, buffered in BIOS
+
+; SD-Card Command Buffer ******************************************************
+
+SD_CMD		EQU	$DE		; CMD Byte	   --- not critical
+SD_PB3      	EQU   	$DF   		; Parameter Byte 3 --- not critical
+SD_PB2		EQU   	$E0   		; Parameter Byte 2 --- buffered in BIOS
+SD_PB1      	EQU   	$E1   		; Parameter Byte 1 --- buffered in BIOS
+SD_PB0		EQU	$E2   		; Parameter Byte 0 --- buffered in BIOS
+SD_CRC		EQU	$E3   		; CRC Byte	   --- buffered in BIOS
+					; --- destroyed by SD_RW, used by CCP
+
+BLKBUF		EQU	$DC
+BLKBUFL		EQU	$DC
+BLKBUFH		EQU	$DD		; --- destroyed by SD_RW, not critical
+
+; Pointer to Logical Block Address ********************************************
+
+PLBA		EQU	$E6		; LBA Pointer
+PLBAL		EQU	$E6		; LBA Pointer Low Byte
+PLBAH		EQU	$E7		; LBA Pointer High Byte
+					; --- destroyed by SD_RW,
+					; not used by CPM-65
+
+; VIA2 Variables **************************************************************
+
+VIA_STATUS 	EQU	$E4 		; current VIA2 PortB output status
+					; --- sound, tape reader, not used by CPM-65
+
+; Clock Variables *************************************************************
+
+DIVCHAR		EQU	$F2		;--- not critical
