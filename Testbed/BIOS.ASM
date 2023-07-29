@@ -4,6 +4,7 @@
 
 ;V0.1	06.07.23	JC II version, erster Anlauf
 ;V0.2	26.07.23	error corrections - SETLBA, SD_ERROR
+;V0.3	27.07.23	saves E0..E3
 
 VERSION	= $02		;VERSION NUMBER
 
@@ -15,7 +16,6 @@ VERSION	= $02		;VERSION NUMBER
 
 DMAV	= $FE		;DMA-VECTOR
 DIRBFV	= $FC		;DIRBF-VECTOR
-BIOSP	= $FA		;BIOS-POINTER
 BLKB	= $FA		;BIOS Block Pointer
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
@@ -23,8 +23,15 @@ MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
 
 PLBA	= $E4	;LBA Pointer
 
-XBUF	= $DF
-YBUF	= $DE
+SD_CMD	= $DE	;CMD Byte
+SD_PB3  = $DF	;Parameter Byte 3
+SD_PB2	= $E0	;Parameter Byte 2
+SD_PB1  = $E1 	;Parameter Byte 1
+SD_PB0	= $E2	;Parameter Byte 0
+SD_CRC	= $E3	;CRC Byte
+
+XBUF	= $DB
+YBUF	= $DC
 TEMP	= $DD   ;temp storage
 
 ;SYSTEM CONSTANTS
@@ -124,7 +131,7 @@ FBIOS	JMP BOOT		; 00
 ;========== DATA AREA =============
 ;--- Disk Image TABLE ---
 
-IMGTAB	DS 4*4,0		;Base Sector address of disk images mounted
+IMGTAB	DS 4*4,0	;Base Sector address of disk images mounted
 IMGSTAT	DS 4,0		;Flag $FF valid image, $00 no image
 SD_TYPE	DB 0		;SD Card Type
 
@@ -157,13 +164,6 @@ LBA	DS 4,0		;LSB ... MSB
 LBA_B	DS 4,$FF
 LBA_F	DB 0		;LBA FLAG BIT7 = dirty
 
-SD_CMD	DB 0	;CMD Byte
-SD_PB3  DB 0	;Parameter Byte 3
-SD_PB2	DB 0	;Parameter Byte 2
-SD_PB1  DB 0 	;Parameter Byte 1
-SD_PB0	DB 0	;Parameter Byte 0
-SD_CRC	DB 0	;CRC Byte
-
 ;==================================
 
 BOOT	LDA #$4C		;SET JMP BDOS
@@ -172,8 +172,8 @@ BOOT	LDA #$4C		;SET JMP BDOS
 	STA JPBDOS+1
 	LDA #CCP/256
 	STA JPBDOS+2
-	JSR SD_INIT		;init card & set SD_MODE
-	BCC B_ERR
+	LDA MODE
+	STA SD_TYPE
 	LDA #0			;a: only
 	STA DRIVE		;SELECT BOOT DRIVE
 	LDX #$0E		;VIA BDOS
@@ -271,9 +271,10 @@ SD_RD3	LDA BLKBUF+256,Y
 	CLC
 	RTS
 
-SD_RD4	JSR SD_INIT		;on error retry
+SD_RD4	LDA #'#
+	JSR ROM_CONOUT
+	JSR SD_INIT		;on error retry
 	BCS READ
-	LDA #NO_SD
 	SEC
 	RTS
 
@@ -312,9 +313,10 @@ SD_WR4	LDA #$80
 SD_WR5	CLC
 	RTS
 
-SD_WRE	JSR SD_INIT		;on error 1 retry
+SD_WRE	LDA #'$
+	JSR ROM_CONOUT
+	JSR SD_INIT		;on error 1 retry
 	BCS WRITE
-	LDA #NO_SD
 	SEC
 	RTS
 
@@ -361,23 +363,17 @@ SETLBA	LDX DRIVE
 	TXA		;Drive*4 = pnt for base LBA
 	ASL A
 	ASL A
-	PHA		;save X
-	TAX		;start with LSB+2
-	INX
-	INX
+	TAX
 	LDY #2
 	CLC
 SETLBA0	LDA SECS,Y	;SECS/2
 	ROR A
-	STA LBA,X
-	DEX
+	STA LBA,Y
 	DEY
 	BPL SETLBA0
 	INY		;Y=0
 	LDA #4
 	STA TEMP	;counter for addition
-	PLA
-	TAX		;restore IMGTAB pointer
 	CLC
 SETLBA1	LDA LBA,Y	;LBA = IMGTAB + SECS/2
 	ADC IMGTAB,X
@@ -408,13 +404,15 @@ CHKBL1	SEC
 	RTS
 
 
-S_READ	BIT LBA_F		;SD_ READ
+S_READ	BIT LBA_F		;SD_READ
 	BPL S_READ1		;if buffer dirty
 	JSR S_SAVE		;SAVE SD_BUFFER
 	BCS S_READX
-S_READ1	LDX #LBA		;load LBA to BLKB
+S_READ1	JSR PUSH_E0
+	LDX #LBA		;load LBA to BLKBUF
 	LDY #LBA/256
 	JSR SD_RD_LBLK_BUF
+	JSR PULL_E0
 	BCS S_READX
 	SEC
 	RTS
@@ -424,9 +422,11 @@ S_READX	JSR SD_UPD		;UPDATE BLK/FLAG INFO
 	RTS
 
 
-S_SAVE	LDX #LBA_B		;save old buffer to SD
+S_SAVE	JSR PUSH_E0
+	LDX #LBA_B		;save old buffer to SD
 	LDY #LBA_B/256
 	JSR SD_WR_LBLK_BUF
+	JSR PULL_E0
 	BCC S_SAVEX
 	CLC
 	RTS
@@ -435,10 +435,12 @@ S_SAVEX	SEC
 	RTS
 
 
-SD_WB	LDX #LBA		;Write SD_ block pysically
+SD_WB	JSR PUSH_E0
+	LDX #LBA		;Write SD_ block pysically
 	LDY #LBA/256
 	JSR SD_WR_LBLK_BUF
 	BCS S_READX
+	JSR PULL_E0
 	SEC
 	RTS
 
@@ -454,6 +456,30 @@ SD_UPD	LDA LBA+3		;save LBA AND update LBA_FLAG
 	LDA #0
 	STA LBA_F
 	RTS
+
+
+PUSH_E0	LDX #$E3		;Save $E3..E0
+	LDY #4			;4 bytes to be saved
+PUSH_E1	LDA 0,X
+	STA E0BUF,X
+	DEX
+	DEY
+	BNE PUSH_E1
+	RTS
+
+
+PULL_E0	LDX #$E3		;Save $E3..E0
+	LDY #4			;4 bytes to be saved
+	PHA			;save A
+PULL_E1	LDA E0BUF,X
+	STA 0,X
+	DEX
+	DEY
+	BNE PULL_E1
+	PLA			;A & C unchanged
+	RTS
+
+E0BUF	DS 4,0
 
 ; *****************************************************************************
 ; Read Single Data Block from Logical Address to Std. Block Buffer
