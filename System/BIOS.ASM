@@ -4,8 +4,9 @@
 
 ;V0.1	06.07.23	JC II version, erster Anlauf
 ;V0.2	25.07.23	error corrections & mount function
+;V0.3	29.07.23	error correction in SETLBA
 
-VERSION	= $02		;VERSION NUMBER
+VERSION	= $03		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -307,23 +308,17 @@ SETLBA	LDX DRIVE
 	TXA		;Drive*4 = pnt for base LBA
 	ASL A
 	ASL A
-	PHA		;save X
-	TAX		;start with LSB+2
-	INX
-	INX
+	TAX
 	LDY #2
 	CLC
 SETLBA0	LDA SECS,Y	;SECS/2
 	ROR A
-	STA LBA,X
-	DEX
+	STA LBA,Y
 	DEY
 	BPL SETLBA0
 	INY		;Y=0
 	LDA #4
 	STA MODE	;counter for addition
-	PLA
-	TAX		;restore IMGTAB pointer
 	CLC
 SETLBA1	LDA LBA,Y	;LBA = IMGTAB + SECS/2
 	ADC IMGTAB,X
