@@ -72,7 +72,6 @@ EOT	= $00
 ;ERROR CODES
 
 WRPROT	= $FC		;DISK WRITE PROTECTED
-VER_ERR	= $83
 SYSGERR = $85
 
 ;==========================================
@@ -122,10 +121,6 @@ ENDDSKX	RTS
 INIT	LDA #STARTM
 	LDY #STARTM/256
 	JSR PRTSTR
-	LDY #GET_VER
-	JSR BIOS
-	CMP #$03
-	BCC INITX
 	LDX #GETDRV
 	JSR BDOS
 	CMP #5			;no SYSTEM on F: or higher
@@ -141,10 +136,6 @@ INIT	LDA #STARTM
 	STA SYSSECS
 	JSR CLR_SEC_E5		;fill SEC_E5 with $E5
 	JSR GET_SYS
-	RTS
-
-INITX	LDA #VER_ERR
-	SEC
 	RTS
 
 INIT1	LDA #SYSGERR
@@ -449,7 +440,6 @@ ERRTAB	DB $FF,$81,'Seek Error, record not found',EOT
 	DB $D8,$82,'Disk full',EOT
 	DB $D6,$82,'File is R/O',EOT
 	DB $85,$10,'No System on this Drive',EOT
-	DB $83,$10,'BIOS Version lower than 2.2',EOT
 	DB $82,$10,'Illegal Parameter',EOT
 	DB $81,$10,'Missing Parameter',EOT
 
@@ -459,7 +449,7 @@ STARTM	DB CLS
 	DB 'FDISK V',VERSION/16+$30,'.',VERSION*$1000/$1000+$30
 	DB '			(c) D. Lausberg	2023'
 	DB CR,LF,CR,LF,EOT
-XCHGM	DB CR,LF,'Insert DOS 3.3 Disk in Drive '
+XCHGM	DB CR,LF,'Insert JC-][ Disk Image in Drive '
 DRVCHR	DB 'B: '
 	DB CR,LF,'and press any key'
 	DB CR,LF,CR,LF
