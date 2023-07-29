@@ -7,13 +7,14 @@
 VERSION	= $12
 
 ;SYSTEM CONSTANTS
-DMA	=  $FE
-DPH	=  $F8
-FCB1	=  $F6
-FCB2	=  $F4
-BDOS	=  $F0
-INBUF	=  $EC
-CCPV	=  $DE
+DMA	= $FE
+DPH	= $F8
+FCB1	= $F6
+FCB2	= $F4
+BDOS	= $F0
+MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
+INBUF	= $EC
+CCPV	= $DE
 
 TPA	= $200
 CCP	= $CC00
@@ -101,7 +102,10 @@ NO_SD	= $88
 
 ;---  CP/M-65 BIOS disk image table  -------------------
 
-IMGTAB	DB $22,$0A,$00,$00	;Base LBA address of disk image A:
+IMGTAB	DB $00,$22,$0A,$00,$00	;Base LBA address of disk image A:
+	DB $01,$22,$12,$00,$00	;Base LBA address of disk image B:
+	DB $02,$22,$1A,$00,$00	;Base LBA address of disk image C:
+	DB $03,$22,$22,$00,$00	;Base LBA address of disk image D:
 SD_TYPE	DB 0			;SD Card Type
 
 ;---  MESSAGES  -----------------------------
@@ -113,7 +117,7 @@ ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
 ;--------------------------------------------
 
 BOOT	LDY #3			;set LBA to current file
-BOOT3	LDA IMGTAB,Y
+BOOT3	LDA IMGTAB+1,Y
 	STA LBA,Y
 	STA LBA_B,Y
 	DEY
@@ -122,6 +126,8 @@ BOOT3	LDA IMGTAB,Y
 	JSR SPI_INIT		;initialize SPI
 	JSR SD_INIT		;initialize SD card
 	BCC B_ERR
+	LDA SD_TYPE
+	STA MODE
 
 BOOT2	LDA #CCP		;and boot it
 	STA BLKBUF
@@ -142,11 +148,33 @@ BOOT5	LDA BOOTM,Y		;print boot message
 	INY
 	BNE BOOT5
 
-BOOT6	LDA #0			;A: in $00..$04
-	STA DRIVE		;set Drive A:		;always 0 -> A:
+BOOT6	LDY #0			;Mount drives
+BOOT11	STY YBUF
+BOOT9	LDY YBUF
+	CPY #4*5		;4 drives mounted?
+	BCS BOOT10
+	LDA IMGTAB,Y
+	BMI BOOT8		;no disc?
+	LDX #0
+BOOT7	LDA IMGTAB,Y
+	STA DRIVE,X		;set Drive
+	INY
+	INX
+	CPX #5
+	BCC BOOT7
+	STY YBUF
+	LDA #0
 	JSR MOUNT*3+BIOS	;BIOS MOUNT command
+	BCC BOOT9
 	BCS B_ERR
-	JMP BIOS		;COLD BOOT
+
+BOOT8	TYA
+	ADC #5
+	TAY
+	BCC BOOT11
+
+BOOT10	JMP BIOS		;COLD BOOT
+
 
 B_ERR	LDY #0
 BOOT4	LDA ERRM,Y		;print error message
