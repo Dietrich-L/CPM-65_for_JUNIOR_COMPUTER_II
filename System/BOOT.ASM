@@ -35,7 +35,6 @@ EOT	= $0
 
 PRTCHR = $E044		;BOUT
 SD_RD_LBLK = $F462	;load sector in LBA to (BLKBUF)
-SD_WR_LBLK = $F495	;save sector in BLKBUF to (BLKBUF)
 
 ROM_MONITOR = $E000	;Monitor cold start
 
@@ -43,7 +42,7 @@ ROM_MONITOR = $E000	;Monitor cold start
 	ORG TPA
 
 BOOT	LDY #3			;set LBA to current file
-BOOT3	LDA (NUM32),Y
+BOOT3	LDA NUM32,Y
 	STA LBA,Y
 	STA LBA_B,Y		;also make a copy
 	DEY
@@ -53,11 +52,11 @@ BOOT2	LDA #CCP		;and boot it
 	STA BLKBUF
 	LDA #CCP/256
 	STA BLKBUF+1
-BOOT1	LDX #LBA_B
+BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
+	LDX #LBA_B
 	LDY #LBA_B/256
 	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
 	BCC B_ERR
-	JSR INCLBA
 	LDA BLKBUF+1
 	CMP #ROM_MONITOR/256	;all sector read?
 	BCC BOOT1
@@ -68,11 +67,10 @@ BOOT5	LDA BOOTM,Y		;print boot message
 	INY
 	BNE BOOT5
 
-	LDA #0			;A: in $00..$04
-	STA DRIVE
+BOOT6	STA DRIVE		;A: in $00..$04, A=0
 	JSR $11*3+BIOS		;mount A:
 	BCS B_ERR
-BOOT6	JMP BIOS		;COLD BOOT
+	JMP BIOS		;COLD BOOT
 
 B_ERR	LDY #0
 BOOT4	LDA ERRM,Y		;print error message
