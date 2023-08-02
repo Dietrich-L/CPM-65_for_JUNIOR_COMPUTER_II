@@ -41,7 +41,7 @@ SD_RD_LBLK_BUF                   $F45F  SD_INIT                          $F38F
 ROM_CONOUT                       $E044  ROM_CONIN                        $E047  
 CGET                             $E04D  BEGIN                            $D800  
 CCP                              $CC00  BLKBUF                           $0600  
-MODE                             $00EE  JPBDOS                           $00F0  
+MODE                             $001A  JPBDOS                           $00F0  
 DPHV                             $00F8  BLKB                             $00FA  
 DIRBFV                           $00FC  DMAV                             $00FE  
-VERSION                          $0003    $00EE  JPBDOS            
+VERSION                          $0003    $001A  JPBDOS            

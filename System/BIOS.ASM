@@ -5,6 +5,7 @@
 ;V0.1	06.07.23	JC II version, erster Anlauf
 ;V0.2	25.07.23	error corrections & mount function
 ;V0.3	29.07.23	error correction in SETLBA
+;V0.4	02.08.23	error correction MODE adr
 
 VERSION	= $03		;VERSION NUMBER
 
@@ -19,7 +20,7 @@ DIRBFV	= $FC		;DIRBF-VECTOR
 BLKB	= $FA		;BIOS Block Pointer
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
-MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
+MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
 
 ;SYSTEM CONSTANTS
 
