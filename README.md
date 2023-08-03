@@ -93,7 +93,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BOOT<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.2*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.3*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BOOT program in track 0, sector 0<br>
