@@ -7,7 +7,8 @@
 ;V1.0	25.07.23	BIOS MOUNT command
 ;V1.1	26.07.23	;$CC00 version
 ;V1.2	27.07.23	;code improvements
-Version = $12
+;V1.3	03.08.23	;saves SD_TYPE in DPH
+Version = $13
 
 ;Parameter
 
@@ -16,14 +17,22 @@ LBA	= $01		;LSB ... MSB
 LBA_B	= $05
 
 
-DMA	= $FE
+DMA	= $FE		;DMA-Vector
+DPH	= $F8		;DPH-VECTOR
 NUM32	= $F8     	;LBA vector to 1. Cluster of disc image
 
 BLKBUF	= $DC		;BLKBUF adr for SD	
 
+SD_TYPE	= $1A
+
 TPA	= $2000
 CCP	= $CC00
 BIOS	= $D800
+
+;BIOS COMMANDS
+
+SELDSK	= $09
+MOUNT	= $11
 
 ;CONSTANTS
 
@@ -68,8 +77,12 @@ BOOT5	LDA BOOTM,Y		;print boot message
 	BNE BOOT5
 
 BOOT6	STA DRIVE		;A: in $00..$04, A=0
-	JSR $11*3+BIOS		;mount A:
+	JSR MOUNT*3+BIOS	;mount A:
 	BCS B_ERR
+	JSR SELDSK*3+BIOS	;BIOS SELDSK command
+	LDY #17
+	LDA SD_TYPE
+	STA (DPH),Y		;save SD_TYPE to BIOS
 	JMP BIOS		;COLD BOOT
 
 B_ERR	LDY #0

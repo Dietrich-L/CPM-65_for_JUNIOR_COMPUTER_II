@@ -7,7 +7,7 @@
 ;V0.3	29.07.23	error correction in SETLBA
 ;V0.4	02.08.23	error correction MODE adr
 
-VERSION	= $03		;VERSION NUMBER
+VERSION	= $04		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -90,7 +90,6 @@ FBIOS	JMP BOOT		; 00
 
 IMGTAB	DS 4*4,0	;Base Sector address of disk images mounted
 IMGSTAT	DS 4,0		;Flag $FF valid image, $00 no image
-SD_TYPE	DB 0		;SD card type
 
 ;Disk parameter block
 
@@ -106,7 +105,7 @@ DPHA	DW DIRBF	;DISK PARAMETER HEADER
 	DB RPEXT
 	DB SYS,0,0
 	DB BATSIZ
-
+SD_TYPE	DB 0		;SD card type
 
 BAT	DB %11110000	;Block Allocation Table Drive A-D
 	DS BATSIZ	;max. 1 page
@@ -129,8 +128,6 @@ BOOT	LDA #$4C		;SET JMP BDOS
 	STA JPBDOS+1
 	LDA #CCP/256
 	STA JPBDOS+2
-	LDA MODE		;save mode byte
-	STA SD_TYPE
 	LDA #0			;A: only
 	STA DRIVE		;SELECT BOOT DRIVE
 	LDX #$0E		;VIA BDOS

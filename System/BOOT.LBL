@@ -1,23 +1,23 @@
-ERRM                             $2082  BOOTM                            $205B  
-INCLBAX                          $205A  INCLBA1                          $2051  
-INCLBA                           $204F  BOOT_X                           $204C  
-BOOT4                            $2041  B_ERR                            $203F  
+ERRM                             $208B  BOOTM                            $2064  
+INCLBAX                          $2063  INCLBA1                          $205A  
+INCLBA                           $2058  BOOT_X                           $2055  
+BOOT4                            $204A  B_ERR                            $2048  
 BOOT6                            $2035  BOOT5                            $202A  
 BOOT1                            $2016  BOOT2                            $200E  
 BOOT3                            $2002  BOOT                             $2000  
 ROM_MONITOR                      $E000  SD_RD_LBLK                       $F462  
 PRTCHR                           $E044  EOT                              $0000  
 LF                               $000A  CR                               $000D  
+MOUNT                            $0011  SELDSK                           $0009  
 BIOS                             $D800  CCP                              $CC00  
-TPA                              $2000  BLKBUF                           $00DC  
-NUM32                            $00F8  DMA                              $00FE  
+TPA                              $2000  SD_TYPE                          $001A  
+BLKBUF                           $00DC  NUM32                            $00F8  
+DPH                              $00F8  DMA                              $00FE  
 LBA_B                            $0005  LBA                              $0001  
-DRIVE                            $0000  VERSION                          $0012  
-$00DC  
-NUM32                            $00F8                         $0000  
-VERSION                          $0012    $00DC  NUM32                            $00F8  
-DMA                              $00FE  LBA_B                            $0005  
-LBA                              $0001  DRIVE                  $0344  
+DRIVE                            $0000  VERSION                          $0013  
+$00F8  
+DPH                              $00F8  DMA                              $00FE  
+LBA_B                            $0005  LBA                    $0344  
 SD_INIT                          $0329  BLK_MODE                         $0320  
 BIT_MODE                         $0316  LOAD_LBA                         $0304  
 SD_DISK_CHNG                     $0300  SD_DISK_RW                       $02FC  
