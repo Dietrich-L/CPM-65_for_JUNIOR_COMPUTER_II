@@ -13,7 +13,7 @@
 DIRBUF	= $FC
 FCB1	= $F6
 BDOS	= $F0
-CCPV	= $DE
+CCPV	= $E0
 
 TPA	= $2000
 

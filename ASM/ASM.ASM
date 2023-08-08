@@ -21,7 +21,7 @@ DMA	= $FE
 FCB1	= $F6
 BDOS	= $F0
 INBUF	= $EC
-CCPV	= $DE
+CCPV	= $E0
 
 ;===	PAGE 00 CELLS
 CODE	= $00	;pointer to the assembled code

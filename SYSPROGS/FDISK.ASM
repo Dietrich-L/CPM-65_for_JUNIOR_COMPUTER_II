@@ -14,7 +14,7 @@ DMA	= $FE
 BDOS	= $F0
 FCB1	= $F6
 DPH	= $F8
-CCPV	= $DE
+CCPV	= $E0
 TPA	= $2000
 
 DRIVE	= 0

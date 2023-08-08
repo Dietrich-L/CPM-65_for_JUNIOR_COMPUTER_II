@@ -24,7 +24,7 @@ LENGTH	= $1
 ERRNO	= $2
 SECBUF	= $3
 
-CCPV	= $DE
+CCPV	= $E0
 BDOS	= $F0
 FCB1	= $F6
 FCB2	= $F4

@@ -17,7 +17,7 @@ VERSION	= $21
 DIRBUF	= $FC
 FCB1	= $F6
 BDOS	= $F0
-CCPV	= $DE
+CCPV	= $E0
 
 ;---- PAGE 00 CELLS
 

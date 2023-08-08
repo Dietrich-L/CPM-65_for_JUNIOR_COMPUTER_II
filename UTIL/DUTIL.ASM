@@ -13,7 +13,7 @@ FCB1	=  $F6
 FCB2	=  $F4
 BDOS	=  $F0
 INBUF	=  $EC
-CCPV	=  $DE
+CCPV	=  $E0
 TPA	=  $2000
 BUFBEG	=  $8000
 

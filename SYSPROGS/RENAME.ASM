@@ -24,7 +24,7 @@ BUFPNT	= $11		;FILENAME BUFFER POINTER
 
 R_FNAME	= $13		;new filename buffer
 
-CCPV	= $DE
+CCPV	= $E0
 BDOS	= $F0
 FCB1	= $F6
 FCB2	= $F4
