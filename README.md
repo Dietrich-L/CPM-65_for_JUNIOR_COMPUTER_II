@@ -58,7 +58,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">ASM<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.7*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.8*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">native
                 6502 Assembler<br>
@@ -85,7 +85,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">0.4*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">0.7*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -129,7 +129,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">D<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.0*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.2*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">show
                 directory alphabetically sorted<br>
