@@ -14,7 +14,8 @@
 ;V2.5	03.06.21	/L Switch
 ;V2.6	11.11.22	Some optimizations and error corrections
 ;V2.7	21.06.23	more error corrections
-VERSION	= $27
+;V2.8	29.10.23	error in RSTNOD which could lead to spurious error messages
+VERSION	= $28
 
 ;===	SYSTEM CONSTANTS
 DMA	= $FE
@@ -1202,10 +1203,10 @@ SAVNOD	LDA NOD
 	RTS
 
 
-RSTNOD	LDA SNOD
-	STA NOD
-	LDA SNOD+1
-	STA NOD+1
+RSTNOD	LDX SNOD	;don't use A!
+	STX NOD
+	LDX SNOD+1
+	STX NOD+1
 	RTS
 
 
