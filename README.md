@@ -17,7 +17,7 @@ Junior Computer II
 Expansion Card
 
 
-I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system
+I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system and No8rbert J.
 
 <br>&nbsp; System Structure
 --------------------
@@ -76,7 +76,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BDOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.3*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.4*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">CPM-65
                 BDOS<br>
@@ -102,7 +102,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BROWSE<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.0*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.2*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">text
                 file browser<br>
@@ -138,7 +138,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">DEBUG<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.7*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.8*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Debugger,
                 8 breakpoints, stepping, disassembler,...<br>
@@ -219,7 +219,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">TYPE<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.6*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.7*<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">prints
                 text file to screen<br>
