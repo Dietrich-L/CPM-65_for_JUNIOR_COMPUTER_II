@@ -1,0 +1,503 @@
+;BOOT.ASM - Junior Computer II Version
+;(c) by D. Lausberg
+
+;Bootstrap Lader fuer BOOT.SYS
+
+;V0.1	12.07.23
+;V1.0	25.07.23	BIOS MOUNT command
+;V1.1	26.07.23	;$CC00 version
+;V1.2	27.07.23	;code improvements
+;V1.3	03.08.23	;saves SD_TYPE in DPH
+;V1.4	05.08.23	;saves IOBASEH in DPH
+;V1.5	19.08.23	;boot image select
+Version = $15
+
+;Parameter
+
+
+LBA	= $01		;LSB ... MSB
+
+BASE	= $05		;LBA of 1. dir sector/1. data sector - 2 cluster
+NFAT	= $09
+SEC_CLUS = $0A
+NDIR	= $0B
+
+N32	= $28		;32 bit argument
+DIR_NP	= $2C		;pointer to nr of dir entry
+DIR_FNP	= $2E		;dir filename pointer
+IMAGE	= $30		;image to be mounted - Drive, LBA
+CNT_I	= $35		;# images found
+CNT_Y	= $36		;counter
+TEMP	= $37   	;temp storage
+MCNT	= $38
+
+DMA	= $FE		;DMA-Vector
+DPH	= $F8		;DPH-VECTOR
+NUM32	= $F8     	;LBA vector to 1. Cluster of disc image
+
+BLKBUF	= $DC		;BLKBUF adr for SD	
+
+SD_TYPE	= $1A
+IOBASE	= $14
+PSTR	= $EA
+
+BOOT_PART       =     $0400     ; Boot Medium Descriptor
+
+D_PART_START    =     BOOT_PART
+D_PART_SIZE     =     BOOT_PART+$04
+D_DEV_ID        =     BOOT_PART+$08
+D_MEDIUM_DESCR  =     BOOT_PART+$09
+D_FAT_TYPE      =     BOOT_PART+$0A
+D_SECT_PER_CLST =     BOOT_PART+$0B
+D_NUM_OF_FAT    =     BOOT_PART+$0C
+D_NUM_ROOT_DIR  =     BOOT_PART+$0D
+D_START_CLUSTER =     BOOT_PART+$10
+D_START_FAT1    =     BOOT_PART+$14
+D_START_FAT2    =     BOOT_PART+$18
+D_START_DIR     =     BOOT_PART+$1C
+
+TPA	= $2000
+CCP	= $CC00
+BIOS	= $D800
+
+;BIOS COMMANDS
+
+SELDSK	= $09
+MOUNT	= $11
+
+;CONSTANTS
+
+MAX_IMG	= $10		;max # of bootable images on SD
+
+CR	= $D
+LF	= $A
+EOT	= $0
+
+;ERROR CODES
+
+EOF	= $1A
+
+;ROM-BIOS ROUTINES JC II
+
+GETCHR	= $E047		;CIN
+STROUT	= $E083		;string out adr in PSTR
+HEXOUT	= $E091		;print HEX in A
+PRTCHR	= $E044		;BOUT
+SD_RD_LBLK = $F462	;load sector in LBA to (BLKBUF)
+
+ROM_MONITOR = $E000	;Monitor cold start
+
+
+	ORG TPA
+
+BOOT	LDA #BOOTM		;print boot message
+	LDY #BOOTM/256
+	JSR PRTSTR
+	LDY #3			;set LBA to current file
+BOOT3	LDA NUM32,Y
+	STA LBA,Y
+	DEY
+	BPL BOOT3
+	LDA #3			;load 3 sectors more
+	STA MCNT
+BOOT4	JSR INCLBA		;load next sector
+	LDX #LBA
+	LDY #LBA/256
+	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
+	BCC B_ERR
+	DEC MCNT
+	BNE BOOT4
+
+	JSR SEL_BOOT_DISK	;select boot disk
+	BCS B_ERR
+
+BOOT2	LDA #CCP		;and boot it
+	STA BLKBUF
+	LDA #CCP/256
+	STA BLKBUF+1
+BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
+	LDX #LBA
+	LDY #LBA/256
+	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
+	BCC B_ERR
+	LDA BLKBUF+1
+	CMP #ROM_MONITOR/256	;all sector read?
+	BCC BOOT1
+	LDA #IMAGE		;A: in $00..$04, A=0
+	JSR MOUNT*3+BIOS	;mount A:
+	BCS B_ERR
+	JSR SELDSK*3+BIOS	;BIOS SELDSK command
+	LDY #17
+	LDA SD_TYPE
+	STA (DPH),Y		;save SD_TYPE to BIOS
+	INY
+	LDA IOBASE+1
+	STA (DPH),Y		;save SD_TYPE to BIOS
+	JMP BIOS		;COLD BOOT
+
+B_ERR	LDA #ERRM
+	LDY #ERRM/256
+	JSR PRTSTR		;print error message
+
+BOOT_X	JMP ROM_MONITOR		;and fall back to Monitor
+
+
+
+;---  CP/M-65 BOOT data area  -------------------
+
+IMG_SIZ	DB 0,0,$10,0	;image size 1 MB
+MINUS_2	DB $FE,$FF,$FF,$FF	;-2
+
+;---  MESSAGES  -----------------------------
+
+BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Loader V'
+	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,EOT
+ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
+SELM	DB CR,LF,'select image: ',EOT
+
+;--- Suboutines -----------------------------
+
+INCLBA	LDX #0			;LBA = LBA+1
+INCLBA1	INC LBA,X
+	BNE INCLBAX
+	INX
+	CPX #4
+	BCC INCLBA1
+INCLBAX	RTS
+
+
+PRTSTR	STA PSTR		;print message
+	STY PSTR+1
+	JMP STROUT
+
+
+SEL_BOOT_DISK
+INFO	JSR SET_DIR_INFO	;set directory info parameters
+	BCS INFOX
+	JSR DISP_INFO		;display files in directory
+	BCC DOMOUNT
+INFOX	RTS
+
+DOMOUNT	LDA #0			;mount image on A:
+	STA IMAGE		;save drive
+	LDA CNT_I
+	BEQ MOUNT4
+	LDA #SELM
+	LDY #SELM/256
+	JSR PRTSTR
+GCHR	JSR GETCHR		;GET image nr
+	STA MCNT
+	CMP #$03		;CTRL-C?
+	BEQ MOUNTX
+	CMP #'0			;convert to HEX
+	BCC GCHR		;if not a valid HEX, try again
+	CMP #$3A
+	BCC GCHR2
+	CMP #'A
+	BCC GCHR
+	CMP #'G
+	BCS GCHR
+	ADC #9
+GCHR2	AND #$0F
+	CMP CNT_I
+	BCS GCHR		;valid input?
+	PHA
+	LDA MCNT
+	JSR PRTCHR		;print # selected
+	PLA
+	ASL A			;image index * 4
+	ASL A
+	TAY
+	LDX #0
+MOUNT2	LDA IMG_LBA,Y		;set image data
+	STA IMAGE+1,X
+	STA LBA,X
+	INY
+	INX
+	CPX #4
+	BCC MOUNT2
+	CLC
+MOUNTX	RTS
+
+MOUNT4	SEC			;no image
+	RTS
+
+
+SET_DIR_INFO			;set dir params
+	LDA #0
+	LDY #3			;reset LBA, BASE, N32
+SDIR1	STA LBA,Y
+	STA BASE,Y
+	STA N32,Y
+	DEY
+	BPL SDIR1
+	JSR R_LBA_B		;read sector 0 of SD
+	BCS SDIRX
+	LDA BLKB+$1BE+4		;OS-Type
+	BEQ MOUNT4
+	LDY #3
+SDIR2	LDA BLKB+$1BE+8,Y
+	STA BASE,Y		;BASE = begin of partition
+	STA LBA,Y		;LBA = begin of partition
+	DEY
+	BPL SDIR2
+	JSR R_LBA_B		;read sector 0 of partition 1
+	BCS SDIRX
+	LDA BLKB+$0E		;N32 = #reserved sectors
+	STA N32
+	LDA BLKB+$0F
+	STA N32+1
+	JSR ADD			;BASE = BASE + N32
+	LDA BLKB+$10
+	STA NFAT		;#FATs
+	LDA BLKB+$16		;N32 = FAT size
+	STA N32
+	LDA BLKB+$17
+	STA N32+1
+SDIR3	JSR ADD
+	DEC NFAT
+	BNE SDIR3
+	LDA BLKB+$11		;save # dir entries
+	STA NDIR
+	LDA BLKB+$12
+	STA NDIR+1
+	LDA BLKB+$0D		;save # sectors/cluster
+	STA SEC_CLUS
+	JSR BASE2LBA		;BASE -> LBA
+	JSR R_LBA_B		;read sector 0 of directory
+SDIRX	RTS
+
+
+DISP_INFO			;display directory of SD
+	JSR SET_PARAMS		;set DIR_NP, CNT_I, BASE
+DISINF1	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
+	BCS DISINF2		;and store its LBA in FNAMES 
+	JSR NXT_FN		;setup for next filename
+	BCC DISINF1
+	CMP #EOF
+	BNE DISINFX
+DISINF2	CLC
+	RTS
+
+DISINFX SEC
+	RTS
+
+
+DIS_FN	LDA #BLKB		;DIR_FNP = DMA + PNT
+	STA DIR_FNP
+	LDA #BLKB/256
+	STA DIR_FNP+1
+	LDA DIR_NP		;PNT = DIR_NP*32 mod 256
+	ASL A
+	ASL A
+	ASL A
+	ASL A
+	ASL A
+	BCC DISFN2
+	INC DIR_FNP+1		;2. page
+	CLC
+DISFN2	ADC DIR_FNP
+	STA DIR_FNP
+	BCC DISFN1
+	INC DIR_FNP+1
+DISFN1	LDY #0
+	LDA (DIR_FNP),Y		;check special byte
+	CMP #$E5		;deleted?
+	BEQ DISFNX
+	LDY #$0B		;check attribute
+	LDA (DIR_FNP),Y
+	AND #%11011111		;mask archive bit
+	BNE DISFNX
+	JSR CHK_FS		;check filesize
+	BCS DISFNX
+	LDA #CR
+	JSR PRTCHR
+	LDA #LF
+	JSR PRTCHR
+	LDA CNT_I
+	JSR HEXOUT		;print nr
+	LDA #':
+	JSR PRTCHR
+	JSR PRT_FN
+	JSR STO_LBA		;store LBA of 1. sector of the image
+	INC CNT_I
+	LDA CNT_I
+	CMP #MAX_IMG
+	RTS
+
+DISFNX	CLC
+	RTS
+
+
+STO_LBA	LDY #$1A		;N32 = 1. cluster of image (LSB, LSB+1)
+	LDA (DIR_FNP),Y
+	STA N32
+	INY	
+	LDA (DIR_FNP),Y
+	STA N32+1
+	LDY #$14		;N32 = 1. cluster of image (LSB+2, LSB+3)
+	LDA (DIR_FNP),Y
+	STA N32+2
+	INY	
+	LDA (DIR_FNP),Y
+	STA N32+3
+	JSR MUL_SPC		;N32 = N32 * SEC_CLUS
+	LDA CNT_I		;store LBA of 1. sector of the image
+	ASL A
+	ASL A
+	TAY
+	LDX #0
+	LDA #4
+	STA MCNT
+	CLC
+STOLBA1	LDA BASE,X
+	ADC N32,X
+	STA IMG_LBA,Y
+	INY
+	INX
+	DEC MCNT
+	BNE STOLBA1
+	RTS
+
+
+NXT_FN	INC DIR_NP		;setup for next filename
+	BNE NXT_FN1		;DIR_NP = DIR_NP + 1
+	INC DIR_NP+1
+NXT_FN1	LDA DIR_NP+1
+	CMP NDIR+1
+	BNE NXT_FN4
+	LDA DIR_NP
+	CMP NDIR
+	BCS NXT_FN3
+NXT_FN4	LDA DIR_NP		;check for next sector
+	AND #%00001111
+	BNE NXT_FN2
+	JSR INCLBA		;INC LBA
+	JSR R_LBA_B		;read sector in LBA to BLKBUF
+	RTS
+
+NXT_FN2	CLC
+	RTS
+
+NXT_FN3	LDA #EOF		;end of directory
+NXT_FNX	RTS
+
+
+SET_PARAMS			;set DIR_NP, CNT_I, BASE
+	LDA #0			;DIR_NP=0
+	STA DIR_NP
+	STA DIR_NP+1
+	STA N32+1
+	STA CNT_I		;CNT_I = 0
+	LDA NDIR+1		;BASE = BASE + NDIR*32/512
+	STA N32			;N32 = NDIR/256
+	LDY #4			;N32 = N32*16
+SET_P1	JSR MUL2
+	DEY
+	BNE SET_P1
+	JSR ADD
+	LDY #3			;BASE = BASE - 2*SEC_CLUS
+SET_P2	LDA MINUS_2,Y
+	STA N32,Y
+	DEY
+	BPL SET_P2
+	JSR MUL_SPC		;N32 * SEC_CLUS
+	JSR ADD
+	RTS
+
+
+MUL_SPC	LDY SEC_CLUS		;N32 * SEC_CLUS
+MULSPC1	TYA
+	LSR A
+	TAY
+	BCS MULSPCX
+	JSR MUL2
+	JMP MULSPC1
+
+MULSPCX	RTS
+	
+
+MUL2	ASL N32			;N32*2
+	ROL N32+1
+	ROL N32+2
+	ROL N32+3
+	RTS
+
+
+ADD	CLC			;BASE = BASE + N32
+	LDX #0
+	LDY #3
+ADD1	LDA BASE,X
+	ADC N32,X
+	STA BASE,X
+	INX
+	DEY
+	BPL ADD1
+	RTS
+
+
+BASE2LBA		;copy BASE to LBA
+	LDX #3
+B2LBA	LDA BASE,X
+	STA LBA,X
+	DEX
+	BPL B2LBA
+	RTS
+
+
+CHK_FS	LDY #$1F		;check for valid image file size
+	LDX #3
+CHK_FS1	LDA (DIR_FNP),Y
+	CMP IMG_SIZ,X
+	BNE CHK_FSX
+	DEY
+	DEX
+	BPL CHK_FS1
+	CLC
+	RTS
+
+CHK_FSX	SEC
+	RTS
+
+
+PRT_FN	LDY #0			;print filename
+PRT_FN1	LDA (DIR_FNP),Y
+	JSR PRTCHR
+	INY
+	CPY #12
+	BCS PRT_FNX
+	CPY #8
+	BNE PRT_FN1
+	LDA #'.
+	JSR PRTCHR
+	JMP PRT_FN1
+
+PRT_FNX	RTS
+
+;---------------------------------------------
+
+R_LBA_B	LDA #BLKB/256		;BLKBUF = BLKB
+	STA BLKBUF+1
+	LDA #BLKB
+	STA BLKBUF
+
+R_LBA	LDX #LBA		;read sector in LBA to BLKBUF
+	LDY #LBA/256
+	JSR SD_RD_LBLK		;read 512 bytes from SD
+	BCC R_LBA1
+	CLC
+	RTS
+
+R_LBA1	SEC
+	RTS	
+
+
+BLKB 
+IMG_LBA	= BLKB+512		;Image LBAs
+
+MEM
+	DS MEM/256+1*256-MEM+256+512,$00		;SPACE FILLED UP TO 4 SECTORS
+
+
+	END
+
