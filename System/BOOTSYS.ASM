@@ -1,19 +1,13 @@
-;BOOT.ASM - Junior Computer II Version
+;BOOTSYS.ASM - Junior Computer II BOOT Image loader
 ;(c) by D. Lausberg
 
-;Bootstrap Lader fuer BOOT.SYS
+;Bootstrap Loader - rename to BOOT.SYS
 
-;V0.1	12.07.23
-;V1.0	25.07.23	BIOS MOUNT command
-;V1.1	26.07.23	;$CC00 version
-;V1.2	27.07.23	;code improvements
-;V1.3	03.08.23	;saves SD_TYPE in DPH
-;V1.4	05.08.23	;saves IOBASEH in DPH
-;V1.5	19.08.23	;boot image select
-Version = $15
+;V1.0	23.11.23
+;V1.1	26.11.23	minor improvement in readability
+Version = $11
 
 ;Parameter
-
 
 LBA	= $01		;LSB ... MSB
 
@@ -107,11 +101,10 @@ BOOT4	JSR INCLBA		;load next sector
 	BCC B_ERR
 	DEC MCNT
 	BNE BOOT4
-
 	JSR SEL_BOOT_DISK	;select boot disk
 	BCS B_ERR
 
-BOOT2	LDA #CCP		;and boot it
+	LDA #CCP		;and boot it
 	STA BLKBUF
 	LDA #CCP/256
 	STA BLKBUF+1
@@ -150,10 +143,11 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 
 ;---  MESSAGES  -----------------------------
 
-BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Loader V'
-	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,EOT
+BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Image Loader V'
+	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,CR,LF,EOT
 ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
-SELM	DB CR,LF,'select image: ',EOT
+SELM	DB CR,LF,CR,LF,'select image: ',EOT
+CRLFM	DB CR,LF,EOT
 
 ;--- Suboutines -----------------------------
 
@@ -165,6 +159,8 @@ INCLBA1	INC LBA,X
 	BCC INCLBA1
 INCLBAX	RTS
 
+CRLF	LDA #CRLFM		;print CR, LF
+	LDY #CRLFM/256
 
 PRTSTR	STA PSTR		;print message
 	STY PSTR+1
@@ -204,6 +200,7 @@ GCHR2	AND #$0F
 	PHA
 	LDA MCNT
 	JSR PRTCHR		;print # selected
+	JSR CRLF
 	PLA
 	ASL A			;image index * 4
 	ASL A
