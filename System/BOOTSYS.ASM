@@ -98,7 +98,7 @@ BOOT3	LDA NUM32,Y
 BOOT4	JSR INCLBA		;load next sector
 	LDX #LBA
 	LDY #LBA/256
-	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
+	JSR SD_RD_LBLK		;read 512 bytes from SD to BLKBUF
 	BCC B_ERR
 	DEC MCNT
 	BNE BOOT4
@@ -322,10 +322,7 @@ DISFN1	LDY #0
 	BNE DISFNX
 	JSR CHK_FS		;check filesize
 	BCS DISFNX
-	LDA #CR
-	JSR PRTCHR
-	LDA #LF
-	JSR PRTCHR
+	JSR CRLF		;new line
 	LDA CNT_I
 	JSR HEXOUT		;print nr
 	LDA #':
