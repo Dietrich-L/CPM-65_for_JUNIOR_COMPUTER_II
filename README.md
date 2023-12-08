@@ -6,31 +6,34 @@
   <body>
     <pre>CPM-65 Junior Computer II Port
 ===========
-Dietrich Lausberg &lt;lausbergd@gmail.com&gt;
+Dietrich Lausberg <lausbergd@gmail.com>
 https://github.com/dietrich-l
 
 This repository contains the Junior Computer II Port of CPM-65, <br>a CP/M-80 analogue operating system for 6502 based microcomputers
 
 <br>System Requirements
 --------------------------
+
 Junior Computer II
 Expansion Card
-
 
 I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system and No8rbert J.
 
 <br>&nbsp; System Structure
 --------------------
+
 CPM-65 consists of 3 layers:
+
 - BIOS Basic I/O system - Drives can be A-D non consecutive. 
 - BDOS Basic disc operating system - this is the CPM-65 kernal. Size 2 kB
 - CCP Console command program - a simple console which only allows to invoke CPM-65 programs. <br>      No resident commands. Size 1 kB<br><br>In track 0, sector 0 resides a 256 bytes BOOT program, which loads CPM-65 to memory and starts the CCP. <br>The system can boot from any Drive A: to D:)<br><br>&nbsp;File &amp; Disc Format
+
 ----------------------
+
 Filenames are CP/M-style d:filename.ext with d &lt;Drive A-D&gt;
 Programs must have .COM as extension and are loaded to $2000 and started there.
 
-The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a
-href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer">CIFE (CPM Image File Explorer)</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
+The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer">CIFE (CPM Image File Explorer)</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
 
 The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in the BIOS. The BDOS operates on sector numbers. 
 
@@ -241,10 +244,12 @@ All software is supplied as assembler files to be assembled with the CPM-65 asse
 
 Documentation
 --------------------
+
 Currently the documentation of CPM-65 is sparse and only for my personal needs. <br>I plan to write appropriate docs over time. If there are any whishes, please open a DISCUSSION
 
 Errors
 --------------------
+
 The Junior Computer II port of CPM-65 is currently work in progress. Expect errors and crashes.
 
 The CPM-65 system itself has now seen more than 30 years of service. Currently there are no known errors. 
@@ -253,17 +258,20 @@ However, since an error free software does not exist, please report any errors i
 
 Other related systems
 ---------------------
+
 When I started the development of cpm-65, I was blissfully unaware of any other aproaches. <br>However there are some, most notably:
+
 - DOS/65 by Richard Leary. There is a limited compatibility
 - OUP/M  by Jiang - Xiong Shao. Published 1983, no further development
 - CPM65 by David Given, published 2022
 
-
 Redistribution
 --------------
+
 Source code, and all documents, are freely redistributable in
 any form. Please see the the COPYRIGHT file included in this
 Repository.</pre>
     </a>
   </body>
+
 </html>
