@@ -5,7 +5,8 @@
 
 ;V1.0	23.11.23
 ;V1.1	26.11.23	minor improvement in readability
-Version = $11
+;V1.2	08.12.23	debug version
+Version = $12
 
 ;Parameter
 
@@ -102,7 +103,7 @@ BOOT4	JSR INCLBA		;load next sector
 	DEC MCNT
 	BNE BOOT4
 	JSR SEL_BOOT_DISK	;select boot disk
-	BCS B_ERR
+	BCS B_ERR1
 
 	LDA #CCP		;and boot it
 	STA BLKBUF
@@ -128,11 +129,16 @@ BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
 	STA (DPH),Y		;save SD_TYPE to BIOS
 	JMP BIOS		;COLD BOOT
 
+B_ERR1	LDA #ERR1M
+	LDY #ERR1M/256
+	BNE B_ERR0
+
 B_ERR	LDA #ERRM
 	LDY #ERRM/256
-	JSR PRTSTR		;print error message
+B_ERR0	JSR PRTSTR		;print error message
 
-BOOT_X	JMP ROM_MONITOR		;and fall back to Monitor
+BOOT_X	BRK			;Break
+	;JMP ROM_MONITOR	 ;and fall back to Monitor
 
 
 
@@ -146,6 +152,7 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Image Loader V'
 	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,CR,LF,EOT
 ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
+ERR1M	DB CR,LF,'no DIR or image found',CR,LF,EOT
 SELM	DB CR,LF,CR,LF,'select image: ',EOT
 CRLFM	DB CR,LF,EOT
 
@@ -172,7 +179,7 @@ INFO	JSR SET_DIR_INFO	;set directory info parameters
 	BCS INFOX
 	JSR DISP_INFO		;display files in directory
 	BCC DOMOUNT
-INFOX	RTS
+INFOX	RTS			;C=1 Error
 
 DOMOUNT	LDA #0			;mount image on A:
 	STA IMAGE		;save drive
@@ -228,6 +235,8 @@ SDIR1	STA LBA,Y
 	STA N32,Y
 	DEY
 	BPL SDIR1
+	LDA #'1			;1
+	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of SD
 	BCS SDIRX
 	LDA BLKB+$1BE+4		;OS-Type
@@ -238,6 +247,8 @@ SDIR2	LDA BLKB+$1BE+8,Y
 	STA LBA,Y		;LBA = begin of partition
 	DEY
 	BPL SDIR2
+	LDA #'2			;2
+	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of partition 1
 	BCS SDIRX
 	LDA BLKB+$0E		;N32 = #reserved sectors
@@ -261,22 +272,26 @@ SDIR3	JSR ADD
 	LDA BLKB+$0D		;save # sectors/cluster
 	STA SEC_CLUS
 	JSR BASE2LBA		;BASE -> LBA
+	LDA #'3			;3
+	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of directory
-SDIRX	RTS
+SDIRX	RTS			;C=1 Error
 
 
 DISP_INFO			;display directory of SD
 	JSR SET_PARAMS		;set DIR_NP, CNT_I, BASE
-DISINF1	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
+DISINF1	LDA #'4			;4
+	JSR PRTCHR
+	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
 	BCS DISINF2		;and store its LBA in FNAMES 
 	JSR NXT_FN		;setup for next filename
 	BCC DISINF1
 	CMP #EOF
 	BNE DISINFX
-DISINF2	CLC
+DISINF2	CLC			;end of directory
 	RTS
 
-DISINFX SEC
+DISINFX SEC			;Error
 	RTS
 
 
@@ -320,7 +335,7 @@ DISFN1	LDY #0
 	INC CNT_I
 	LDA CNT_I
 	CMP #MAX_IMG
-	RTS
+	RTS			;C=1 end of directory
 
 DISFNX	CLC
 	RTS
@@ -371,7 +386,7 @@ NXT_FN4	LDA DIR_NP		;check for next sector
 	BNE NXT_FN2
 	JSR INCLBA		;INC LBA
 	JSR R_LBA_B		;read sector in LBA to BLKBUF
-	RTS
+	RTS			;C=1 Error
 
 NXT_FN2	CLC
 	RTS
@@ -485,7 +500,7 @@ R_LBA	LDX #LBA		;read sector in LBA to BLKBUF
 	CLC
 	RTS
 
-R_LBA1	SEC
+R_LBA1	SEC			;Error
 	RTS	
 
 
@@ -493,8 +508,8 @@ BLKB
 IMG_LBA	= BLKB+512		;Image LBAs
 
 MEM
-	DS MEM/256+1*256-MEM+256+512,$00		;SPACE FILLED UP TO 4 SECTORS
+	DS $2800-MEM,$00		;SPACE FILLED UP TO 4 SECTORS
 
-
+TOP
 	END
 
