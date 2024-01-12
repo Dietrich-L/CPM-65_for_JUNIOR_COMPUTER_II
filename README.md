@@ -10,7 +10,7 @@ Dietrich Lausberg <lausbergd@gmail.com>
 https://github.com/dietrich-l
 
 This repository contains the Junior Computer II Port of CPM-65, <br>a CP/M-80 analogue operating system for 6502 based microcomputers
-
+<br><a href="https://github.com/Dietrich-L/CPM-65_for_JUNIOR_COMPUTER_II/tree/809f96e0c727f9137504f2c5fbe43f5119aa5f8d/docs/Pics">CPM-65 Boot Screen</a>
 <br>System Requirements
 --------------------------
 
@@ -34,12 +34,11 @@ CPM-65 consists of 3 layers:
 Filenames are CP/M-style d:filename.ext with d &lt;Drive A-D&gt;
 Programs must have .COM as extension and are loaded to $2000 and started there.
 
-The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a
-
+The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a
 href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer">CIFE (CPM Image File Explorer)</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
 
 The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in the BIOS. The BDOS operates on sector numbers. 
-<br><a href="https://github.com/Dietrich-L/CPM-65_for_JUNIOR_COMPUTER_II/blob/master/docs/Pics/4_BOOT.JPG"></a>
+<br>
 </lausbergd@gmail.com></pre><a title="Software List" a=""> Software List
       <table style="width: 809px;" border="1">
         <tbody>
