@@ -17,7 +17,7 @@ This repository contains the Junior Computer II Port of CPM-65, <br>a CP/M-80 an
 Junior Computer II
 Expansion Card
 
-I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system and No8rbert J.
+I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system, and Norbert J.
 
 <br>&nbsp; System Structure
 --------------------
@@ -26,19 +26,20 @@ CPM-65 consists of 3 layers:
 
 - BIOS Basic I/O system - Drives can be A-D non consecutive. 
 - BDOS Basic disc operating system - this is the CPM-65 kernal. Size 2 kB
-- CCP Console command program - a simple console which only allows to invoke CPM-65 programs. <br>      No resident commands. Size 1 kB<br><br>In track 0, sector 0 resides a 256 bytes BOOT program, which loads CPM-65 to memory and starts the CCP. <br>The system can boot from any Drive A: to D:)<br><br>&nbsp;File &amp; Disc Format
+- CCP Console command program - a simple console which only allows to invoke CPM-65 programs. <br>      No resident commands. Size 1 kB<br><br>On the JC ][ CPM-65 resides on 1 MB images on a SD card. Upon Boot the JC ][ first executes a <br>program in BOOT.SYS in the root directory of the SD. BOOT.SYS offers all bootable images found <br>in the Root directory for booting. The images must have the CPM-65 system in sectors 1 to 11.<br>The program then loads CPM-65 to memory, mounts the selected image as Drive A: via a BIOS call<br>and starts the CCP. Up to 4 images can be mounted with the utility SD-UTIL.<br>
 
+<br> &nbsp;File &amp; Disc Format
 ----------------------
 
 Filenames are CP/M-style d:filename.ext with d &lt;Drive A-D&gt;
 Programs must have .COM as extension and are loaded to $2000 and started there.
 
-The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer">CIFE (CPM Image File Explorer)</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
+The directory structure is nearly CP/M-compatible. Disk images can be read with appropriate  tools <br>like CPMTOOLS, <a
+href="https://github.com/ProgrammingHobby/CPM_Image-File_Explorer">CIFE (CPM Image File Explorer)</a> or CpmtoolsGUI. A disdefs file is in the IMAGES section. 
 
 The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in the BIOS. The BDOS operates on sector numbers. 
 
-Software List
-</pre><a title="CIFE" a="">
+</lausbergd@gmail.com></pre><a title="Software List" a=""> Software List
       <table style="width: 809px;" border="1">
         <tbody>
           <tr>
@@ -52,7 +53,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">ALLOC<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.9*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.9<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">shows
                 disc allocation map<br>
@@ -61,7 +62,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">ASM<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.8*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.8<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">native
                 6502 Assembler<br>
@@ -79,7 +80,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BDOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.4*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.4<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">CPM-65
                 BDOS<br>
@@ -88,7 +89,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">0.7*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">0.7<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -96,7 +97,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BOOT<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.3*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.3<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BOOT program in track 0, sector 0<br>
@@ -105,7 +106,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BROWSE<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.2*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.2<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">text
                 file browser<br>
@@ -114,7 +115,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">CCP<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.5*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.5<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">CPM-65
                 CCP<br>
@@ -123,7 +124,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">COPY<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.4*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.4<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">multi
                 file copy utility<br>
@@ -132,7 +133,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">D<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.2*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.2<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">show
                 directory alphabetically sorted<br>
@@ -141,7 +142,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">DEBUG<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.8*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.8<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Debugger,
                 8 breakpoints, stepping, disassembler,...<br>
@@ -150,7 +151,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">DUTIL<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.5*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.5<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">disc
                 sector editor<br>
@@ -168,7 +169,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">ERASE<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.5*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.5<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">erase
                 files<br>
@@ -177,7 +178,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">FDISK<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.0*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.0<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Disk
                 initializer<br>
@@ -186,7 +187,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">FORTH<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.6*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.6<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">FIG
                 FORTH including module for standalone applications<br>
@@ -195,16 +196,23 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">RENAME<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.1*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.1<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">rename
                 files<br>
               </span></td>
           </tr>
           <tr>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD-UTIL</span></a></td>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.2</span></a></td>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD
+                  utility for image handling and sector inspection<br>
+                </span></a></td>
+          </tr>
+          <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">SYS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.6*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.6<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">puts
                 code for BOOT, BIOS, BDOS, CCP into the system tracks<br>
@@ -213,7 +221,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">SYSGEN<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.0*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.0<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">copy
                 operating system to another disc<br>
@@ -222,7 +230,7 @@ Software List
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">TYPE<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.7*<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.7<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">prints
                 text file to screen<br>
@@ -238,40 +246,55 @@ Software List
           </tr>
         </tbody>
       </table>
-      <pre>*available
-
-All software is supplied as assembler files to be assembled with the CPM-65 assembler. <br>In case you wish to use a different assembler, the syntax has to be adapted accordingly.
-
-Documentation
---------------------
-
-Currently the documentation of CPM-65 is sparse and only for my personal needs. <br>I plan to write appropriate docs over time. If there are any whishes, please open a DISCUSSION
-
-Errors
---------------------
-
-The Junior Computer II port of CPM-65 is currently work in progress. Expect errors and crashes.
-
-The CPM-65 system itself has now seen more than 30 years of service. Currently there are no known errors. 
-
-However, since an error free software does not exist, please report any errors in the ISSUE section
-
-Other related systems
----------------------
-
-When I started the development of cpm-65, I was blissfully unaware of any other aproaches. <br>However there are some, most notably:
-
-- DOS/65 by Richard Leary. There is a limited compatibility
-- OUP/M  by Jiang - Xiong Shao. Published 1983, no further development
-- CPM65 by David Given, published 2022
-
-Redistribution
---------------
-
-Source code, and all documents, are freely redistributable in
-any form. Please see the the COPYRIGHT file included in this
-Repository.</pre>
+      &nbsp; <br>
+      All software is supplied as assembler files to be assembled with the
+      CPM-65 assembler. <br>
     </a>
+    <p><a title="Software List" a=""> In case you wish to use a different
+        assembler, the syntax has to be adapted accordingly. <br>
+      </a></p>
+    <p><a title="Software List" a=""> Documentation <br>
+      </a></p>
+    <p><a title="Software List" a="">-------------------- <br>
+      </a></p>
+    <p><a title="Software List" a="">Currently the documentation of CPM-65 is
+        sparse and only for my personal needs. </a></p>
+    <p><a title="Software List" a=""> I plan to write appropriate docs over
+        time. If there are any whishes, please open a DISCUSSION <br>
+      </a></p>
+    <p><a title="Software List" a=""> Errors</a></p>
+    <p><a title="Software List" a=""> -------------------- <br>
+      </a></p>
+    <p><a title="Software List" a="">The Junior Computer II port of CPM-65 is
+        currently work in progress. Expect errors and crashes. <br>
+      </a></p>
+    <p><a title="Software List" a="">The CPM-65 system itself has now seen more
+        than 30 years of service. Currently there are no known errors. <br>
+      </a></p>
+    <p><a title="Software List" a="">However, since an error free software does
+        not exist, please report any errors in the ISSUE section <br>
+      </a></p>
+    <p><a title="Software List" a="">Other related systems <br>
+      </a></p>
+    <p><a title="Software List" a="">--------------------- <br>
+      </a></p>
+    <p><a title="Software List" a="">When I started the development of cpm-65, I
+        was blissfully unaware of any other aproaches. </a></p>
+    <p><a title="Software List" a=""> However there are some, most notably:</a></p>
+    <p><a title="Software List" a=""> - DOS/65 by Richard Leary. There is a
+        limited compatibility</a></p>
+    <p><a title="Software List" a=""> - OUP/M by Jiang - Xiong Shao. Published
+        1983, no further development</a></p>
+    <p><a title="Software List" a=""> - CPM65 by David Given, published 2022 <br>
+      </a></p>
+    <p><a title="Software List" a=""> Redistribution <br>
+      </a></p>
+    <p><a title="Software List" a="">-------------- <br>
+      </a></p>
+    <p><a title="Software List" a=""> Source code, and all documents, are freely
+        redistributable in any form. <br>
+      </a></p>
+    <p><a title="Software List" a="">Please see the the COPYRIGHT file included
+        in this Repository. </a> </p>
   </body>
-
 </html>
