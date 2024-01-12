@@ -6,7 +6,8 @@
 ;V1.0	23.11.23
 ;V1.1	26.11.23	minor improvement in readability
 ;V1.2	08.12.23	debug version
-Version = $12
+;V1.3	09.01.24	FAT32 & FAT16 support
+Version = $13
 
 ;Parameter
 
@@ -235,8 +236,8 @@ SDIR1	STA LBA,Y
 	STA N32,Y
 	DEY
 	BPL SDIR1
-	LDA #'1			;1
-	JSR PRTCHR
+;	LDA #'1			;1
+;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of SD
 	BCS SDIRX
 	LDA BLKB+$1BE+4		;OS-Type
@@ -247,10 +248,16 @@ SDIR2	LDA BLKB+$1BE+8,Y
 	STA LBA,Y		;LBA = begin of partition
 	DEY
 	BPL SDIR2
-	LDA #'2			;2
-	JSR PRTCHR
+;	LDA #'2			;2
+;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of partition 1
 	BCS SDIRX
+	LDA BLKB+$11		;save # dir entries
+	STA NDIR
+	LDA BLKB+$12
+	STA NDIR+1
+	LDA BLKB+$0D		;save # sectors/cluster
+	STA SEC_CLUS
 	LDA BLKB+$0E		;N32 = #reserved sectors
 	STA N32
 	LDA BLKB+$0F
@@ -262,26 +269,32 @@ SDIR2	LDA BLKB+$1BE+8,Y
 	STA N32
 	LDA BLKB+$17
 	STA N32+1
+	ORA N32			;N32 = 0? -> FAT32
+	BEQ SDIR4
 SDIR3	JSR ADD
 	DEC NFAT
 	BNE SDIR3
-	LDA BLKB+$11		;save # dir entries
-	STA NDIR
-	LDA BLKB+$12
-	STA NDIR+1
-	LDA BLKB+$0D		;save # sectors/cluster
-	STA SEC_CLUS
 	JSR BASE2LBA		;BASE -> LBA
-	LDA #'3			;3
-	JSR PRTCHR
+;	LDA #'3			;3
+;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of directory
 SDIRX	RTS			;C=1 Error
+
+SDIR4	LDA BLKB+$24		;N32 = FAT32 size
+	STA N32
+	LDA BLKB+$25
+	STA N32+1
+	LDA BLKB+$26
+	STA N32+2
+	LDA BLKB+$27
+	STA N32+3
+	JMP SDIR3
 
 
 DISP_INFO			;display directory of SD
 	JSR SET_PARAMS		;set DIR_NP, CNT_I, BASE
-DISINF1	LDA #'4			;4
-	JSR PRTCHR
+DISINF1	;LDA #'4			;4
+	;JSR PRTCHR
 	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
 	BCS DISINF2		;and store its LBA in FNAMES 
 	JSR NXT_FN		;setup for next filename
@@ -412,6 +425,10 @@ SET_P2	LDA MINUS_2,Y
 	BPL SET_P2
 	JSR MUL_SPC		;N32 * SEC_CLUS
 	JSR ADD
+	LDA #128		;max. 128 DIR entries
+	STA NDIR
+	LDA #0
+	STA NDIR+1
 	RTS
 
 
