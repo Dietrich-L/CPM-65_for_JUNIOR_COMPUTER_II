@@ -7,7 +7,8 @@
 ;V1.1	26.11.23	minor improvement in readability
 ;V1.2	08.12.23	debug version
 ;V1.3	09.01.24	FAT32 & FAT16 support
-Version = $13
+;V1.4	14.01.24	HEXOUT replced by HEXDIG
+Version = $14
 
 ;Parameter
 
@@ -77,7 +78,7 @@ EOF	= $1A
 
 GETCHR	= $E047		;CIN
 STROUT	= $E083		;string out adr in PSTR
-HEXOUT	= $E091		;print HEX in A
+HEXDIG	= $E09A		;print HEX in A
 PRTCHR	= $E044		;BOUT
 SD_RD_LBLK = $F462	;load sector in LBA to (BLKBUF)
 
@@ -138,9 +139,7 @@ B_ERR	LDA #ERRM
 	LDY #ERRM/256
 B_ERR0	JSR PRTSTR		;print error message
 
-BOOT_X	BRK			;Break
-	;JMP ROM_MONITOR	 ;and fall back to Monitor
-
+BOOT_X	BRK			;Break to Monitor
 
 
 ;---  CP/M-65 BOOT data area  -------------------
@@ -236,8 +235,6 @@ SDIR1	STA LBA,Y
 	STA N32,Y
 	DEY
 	BPL SDIR1
-;	LDA #'1			;1
-;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of SD
 	BCS SDIRX
 	LDA BLKB+$1BE+4		;OS-Type
@@ -248,8 +245,6 @@ SDIR2	LDA BLKB+$1BE+8,Y
 	STA LBA,Y		;LBA = begin of partition
 	DEY
 	BPL SDIR2
-;	LDA #'2			;2
-;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of partition 1
 	BCS SDIRX
 	LDA BLKB+$11		;save # dir entries
@@ -275,8 +270,6 @@ SDIR3	JSR ADD
 	DEC NFAT
 	BNE SDIR3
 	JSR BASE2LBA		;BASE -> LBA
-;	LDA #'3			;3
-;	JSR PRTCHR
 	JSR R_LBA_B		;read sector 0 of directory
 SDIRX	RTS			;C=1 Error
 
@@ -293,9 +286,7 @@ SDIR4	LDA BLKB+$24		;N32 = FAT32 size
 
 DISP_INFO			;display directory of SD
 	JSR SET_PARAMS		;set DIR_NP, CNT_I, BASE
-DISINF1	;LDA #'4			;4
-	;JSR PRTCHR
-	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
+DISINF1	JSR DIS_FN		;display filename indexed by DIR_NP if valid image
 	BCS DISINF2		;and store its LBA in FNAMES 
 	JSR NXT_FN		;setup for next filename
 	BCC DISINF1
@@ -337,7 +328,7 @@ DISFN1	LDY #0
 	BCS DISFNX
 	JSR CRLF		;new line
 	LDA CNT_I
-	JSR HEXOUT		;print nr
+	JSR HEXDIG		;print nr
 	LDA #':
 	JSR PRTCHR
 	JSR PRT_FN
