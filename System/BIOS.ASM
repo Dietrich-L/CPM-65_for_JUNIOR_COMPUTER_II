@@ -9,8 +9,9 @@
 ;V0.5	05.08.23	saves IOBASE
 ;V0.6	14.08.23	MOUNT error corrected
 ;V0.7	13.09.23	no IRQs
+;V0.8	14.01.24	error correction
 
-VERSION	= $07		;VERSION NUMBER
+VERSION	= $08		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -445,23 +446,23 @@ SD_UPD	LDA LBA+3		;save LBA AND update LBA_FLAG
 
 
 PUSH_E0	LDX #$E3		;Save $E3..E0
-	LDY #4			;4 bytes to be saved
+	LDY #3			;4 bytes to be saved
 PUSH_E1	LDA 0,X
-	STA E0BUF,X
+	STA E0BUF,Y
 	DEX
 	DEY
-	BNE PUSH_E1
+	BPL PUSH_E1
 	RTS
 
 
 PULL_E0	LDX #$E3		;Save $E3..E0
-	LDY #4			;4 bytes to be saved
+	LDY #3			;4 bytes to be saved
 	PHA			;save A
-PULL_E1	LDA E0BUF,X
+PULL_E1	LDA E0BUF,Y
 	STA 0,X
 	DEX
 	DEY
-	BNE PULL_E1
+	BPL PULL_E1
 	PLA			;A & C unchanged
 	RTS
 
