@@ -7,7 +7,7 @@
 ;V1.1	26.11.23	minor improvement in readability
 ;V1.2	08.12.23	debug version
 ;V1.3	09.01.24	FAT32 & FAT16 support
-;V1.4	14.01.24	HEXOUT replced by HEXDIG
+;V1.4	14.01.24	HEXOUT replaced by HEXDIG
 Version = $14
 
 ;Parameter
@@ -37,21 +37,6 @@ BLKBUF	= $DC		;BLKBUF adr for SD
 SD_TYPE	= $1A
 IOBASE	= $14
 PSTR	= $EA
-
-BOOT_PART       =     $0400     ; Boot Medium Descriptor
-
-D_PART_START    =     BOOT_PART
-D_PART_SIZE     =     BOOT_PART+$04
-D_DEV_ID        =     BOOT_PART+$08
-D_MEDIUM_DESCR  =     BOOT_PART+$09
-D_FAT_TYPE      =     BOOT_PART+$0A
-D_SECT_PER_CLST =     BOOT_PART+$0B
-D_NUM_OF_FAT    =     BOOT_PART+$0C
-D_NUM_ROOT_DIR  =     BOOT_PART+$0D
-D_START_CLUSTER =     BOOT_PART+$10
-D_START_FAT1    =     BOOT_PART+$14
-D_START_FAT2    =     BOOT_PART+$18
-D_START_DIR     =     BOOT_PART+$1C
 
 TPA	= $2000
 CCP	= $CC00
@@ -154,7 +139,6 @@ BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Image Loader V'
 ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
 ERR1M	DB CR,LF,'no DIR or image found',CR,LF,EOT
 SELM	DB CR,LF,CR,LF,'select image: ',EOT
-CRLFM	DB CR,LF,EOT
 
 ;--- Suboutines -----------------------------
 
@@ -166,8 +150,6 @@ INCLBA1	INC LBA,X
 	BCC INCLBA1
 INCLBAX	RTS
 
-CRLF	LDA #CRLFM		;print CR, LF
-	LDY #CRLFM/256
 
 PRTSTR	STA PSTR		;print message
 	STY PSTR+1
@@ -207,7 +189,8 @@ GCHR2	AND #$0F
 	PHA
 	LDA MCNT
 	JSR PRTCHR		;print # selected
-	JSR CRLF
+	LDA #CR			;print CRLF
+	JSR PRTCHR
 	PLA
 	ASL A			;image index * 4
 	ASL A
@@ -326,7 +309,8 @@ DISFN1	LDY #0
 	BNE DISFNX
 	JSR CHK_FS		;check filesize
 	BCS DISFNX
-	JSR CRLF		;new line
+	LDA #CR			;print CRLF
+	JSR PRTCHR
 	LDA CNT_I
 	JSR HEXDIG		;print nr
 	LDA #':
