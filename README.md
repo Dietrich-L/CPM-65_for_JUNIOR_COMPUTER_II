@@ -26,7 +26,7 @@ CPM-65 consists of 3 layers:
 
 - BIOS Basic I/O system - Drives can be A-D non consecutive. 
 - BDOS Basic disc operating system - this is the CPM-65 kernal. Size 2 kB
-- CCP Console command program - a simple console which only allows to invoke CPM-65 programs. <br>      No resident commands. Size 1 kB<br><br>On the JC ][ CPM-65 resides on 1 MB images on a SD card. Upon Boot the JC ][ first executes a <br>program in BOOT.SYS in the root directory of the SD. BOOT.SYS offers all bootable images found <br>in the Root directory for booting. The images must have the CPM-65 system in sectors 1 to 11.<br>The program then loads CPM-65 to memory, mounts the selected image as Drive A: via a BIOS call<br>and starts the CCP. Up to 4 images can be mounted with the utility SD-UTIL.<br>
+- CCP Console command program - a simple console which only allows to invoke CPM-65 programs. <br>      No resident commands. Size 1 kB<br><br>On the JC ][ CPM-65 resides on 1 MB images on a SD card. Upon Boot the JC ][ first executes a <br>program in BOOT.SYS in the root directory of the SD. BOOT.SYS offers all bootable images found <br>in the Root directory for booting. The images must have the CPM-65 system in sectors 1 to 11.<br>The program then loads CPM-65 to memory, mounts the selected image as Drive A: via a BIOS call<br>and starts the CCP. Up to 4 images can be mounted with the utility SD-UTIL. <br>A more detailed description how to prepare a bootable SD card can be found <br>under [docs/CPM-65 JC-II BOOT preparations.txt](https://github.com/Dietrich-L/CPM-65_for_JUNIOR_COMPUTER_II/blob/master/docs/CPM-65%20JC-II%20BOOT%20preparations.txt)<br>
 
 <br> &nbsp;File &amp; Disc Format
 ----------------------
