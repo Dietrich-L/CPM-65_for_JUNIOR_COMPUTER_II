@@ -8,7 +8,8 @@
 ;V1.2	08.12.23	debug version
 ;V1.3	09.01.24	FAT32 & FAT16 support
 ;V1.4	14.01.24	HEXOUT replaced by HEXDIG
-Version = $14
+;V1.5	20.02.24	error correction LF's removed, uses COUT
+Version = $15
 
 ;Parameter
 
@@ -64,7 +65,7 @@ EOF	= $1A
 GETCHR	= $E047		;CIN
 STROUT	= $E083		;string out adr in PSTR
 HEXDIG	= $E09A		;print HEX in A
-PRTCHR	= $E044		;BOUT
+PRTCHR	= $E052		;COUT
 SD_RD_LBLK = $F462	;load sector in LBA to (BLKBUF)
 
 ROM_MONITOR = $E000	;Monitor cold start
@@ -134,11 +135,11 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 
 ;---  MESSAGES  -----------------------------
 
-BOOTM	DB CR,LF,'CP/M-65 for JC-II Boot Image Loader V'
-	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,LF,CR,LF,EOT
-ERRM	DB CR,LF,'BOOT failed',CR,LF,EOT
-ERR1M	DB CR,LF,'no DIR or image found',CR,LF,EOT
-SELM	DB CR,LF,CR,LF,'select image: ',EOT
+BOOTM	DB CR,'CP/M-65 for JC-II Boot Image Loader V'
+	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,CR,EOT
+ERRM	DB CR,'BOOT failed',CR,EOT
+ERR1M	DB CR,'no DIR or image found',CR,EOT
+SELM	DB CR,CR,'select image: ',EOT
 
 ;--- Suboutines -----------------------------
 

@@ -1,15 +1,3 @@
-# Apple II CPM-65 skew 0 Apple II DOS 3.3 skew
-diskdef A2-CPM-65
-  seclen 256
-  tracks 35
-  sectrk 16
-  blocksize 512
-  extentsize 4096
-  maxdir 128
-  boottrk 2
-  os 2.2
-end
-
 #Junior Computer II CPM-65
 diskdef JC-II
   seclen 256
@@ -23,15 +11,3 @@ diskdef JC-II
   os 2.2
 end
 
-# ELEKTOR Junior Computer CPM-65
-diskdef JC
-  seclen 256
-  tracks 80
-  sectrk 16
-  blocksize 1024
-  maxdir 128
-  skew 0
-  boottrk 2
-  os 2.2
-  extentsize 8192
-end
