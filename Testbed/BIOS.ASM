@@ -5,11 +5,15 @@
 ;V0.1	06.07.23	JC II version, erster Anlauf
 ;V0.2	26.07.23	error corrections - SETLBA, SD_ERROR
 ;V0.3	27.07.23	saves E0..E3
+;V0.4	03.08.23	saves MODE only on 1. BOOT
+;V0.6	14.08.23	MOUNT error corrected
+;V0.7	11.12.23	SD card reset corrected
+;V0.8	22.01.24	Fast SPI version, BIOS functions $12&$13 added
 
-VERSION	= $02		;VERSION NUMBER
+VERSION	= $08		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
-
+;Low level BIOS code by J. Walke
 ;=====================================
 
 ;PAGE 00 CELLS
@@ -19,7 +23,7 @@ DIRBFV	= $FC		;DIRBF-VECTOR
 BLKB	= $FA		;BIOS Block Pointer
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
-MODE	= $EE		;SD Mode byte 0 byte mode; <>0 block mode
+MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
 
 PLBA	= $E4	;LBA Pointer
 
@@ -55,13 +59,19 @@ ROM_MONITOR = $F830
 
 ;--- VIA 6522 adresses
 ;SPI driver  Mode 0 uses VIA DRB
-;Bit 7	MISO
-;BIT 6	MOSI
-;Bit 0	CLK
+;BIT 1	CS
+;Bit 0	MOSI
+; CB 1	CLK
+; CB 2	MISO
 
 DRB	= $F400
 DDRB	= $F402
-PCR	= $F40C
+T2CL	= $F408
+T2CH	= $F409
+SR	= $F40A
+ACR	= $F40B
+IFR	= $F40D
+IER	= $F40E
 
 ;--- SD Command Constants 
 
@@ -127,13 +137,14 @@ FBIOS	JMP BOOT		; 00
 	JMP GET_VERSION		; 0F
 	JMP ROM_MONITOR		; 10
 	JMP MOUNT		; 11
+	JMP RD_ABS		; 12 read SD block absolute to BLKBUF
+	JMP WR_ABS		; 13 write SD block absolute from BLKBUF
 
 ;========== DATA AREA =============
 ;--- Disk Image TABLE ---
 
 IMGTAB	DS 4*4,0	;Base Sector address of disk images mounted
 IMGSTAT	DS 4,0		;Flag $FF valid image, $00 no image
-SD_TYPE	DB 0		;SD Card Type
 
 ;Disk parameter block
 
@@ -149,7 +160,7 @@ DPHA	DW DIRBF	;DISK PARAMETER HEADER
 	DB RPEXT
 	DB SYS,0,0
 	DB BATSIZ
-
+SD_TYPE	DB 0		;SD Card Type
 
 BAT	DB %11110000	;Block Allocation Table Drive A-D
 	DS BATSIZ	;max. 1 page
@@ -161,7 +172,7 @@ SECS	DS 4,0		;CPM-65 sector #, Byte 4 is not used
 ;--- buffer for SD CARD
 
 LBA	DS 4,0		;LSB ... MSB
-LBA_B	DS 4,$FF
+LBA_B	DS 4,$FF	;LBA in BLKBUF
 LBA_F	DB 0		;LBA FLAG BIT7 = dirty
 
 ;==================================
@@ -172,16 +183,13 @@ BOOT	LDA #$4C		;SET JMP BDOS
 	STA JPBDOS+1
 	LDA #CCP/256
 	STA JPBDOS+2
-	LDA MODE
-	STA SD_TYPE
-	LDA #0			;a: only
+	LDA #0			;A: only
 	STA DRIVE		;SELECT BOOT DRIVE
 	LDX #$0E		;VIA BDOS
 	JSR JPBDOS
 	LDX #0 			;WARM BOOT
 	JMP JPBDOS
 
-B_ERR	JMP ROM_MONITOR
 
 WBOOT	LDA DRIVE		;SELECT DEFAULT DRIVE
 	JSR SELDSK
@@ -210,12 +218,12 @@ AUXOUT	RTS
 AUXIN	RTS
 
 
-HOME	;JSR SD_INIT
-;	BCC HOMEX
-;	CLC
-;	RTS
+HOME	JSR SD_INIT
+	BCC HOMEX
+	CLC
+	RTS
 
-;HOMEX	SEC
+HOMEX	SEC
 	RTS
 
 
@@ -249,6 +257,7 @@ SETTRK	LDA #$FB		;Sector not found
 
 
 READ	JSR SETLBA		;SET LBA = IMGTAB + SECS/2
+	BCS SD_RDX
 	JSR CHKBLK		;CHECK IF BLOCK VALID
 	BCC SD_RD1
 	JSR S_READ
@@ -271,15 +280,14 @@ SD_RD3	LDA BLKBUF+256,Y
 	CLC
 	RTS
 
-SD_RD4	LDA #'#
-	JSR ROM_CONOUT
-	JSR SD_INIT		;on error retry
-	BCS READ
+SD_RD4	JSR HOME		;reset SD and retry
+	BCC READ
 	SEC
-	RTS
+SD_RDX	RTS
 
 
 WRITE	JSR SETLBA		;WRITE SD card
+	BCS SD_RDX
 	JSR CHKBLK
 	BCC SD_WR1
 	JSR S_READ		;write implicitely
@@ -313,10 +321,8 @@ SD_WR4	LDA #$80
 SD_WR5	CLC
 	RTS
 
-SD_WRE	LDA #'$
-	JSR ROM_CONOUT
-	JSR SD_INIT		;on error 1 retry
-	BCS WRITE
+SD_WRE	JSR HOME		;reset SD and retry
+	BCC WRITE
 	SEC
 	RTS
 
@@ -333,6 +339,7 @@ GET_VERSION			;GET VERSION NUMBER
 
 MOUNT	TAX			;mount disk image on SD
 	LDA 0,X			;load drive to be mounted
+	BMI MOUNT2
 	CMP #4			;max A: - D:
 	BCS MOU_ERR
 	TAY
@@ -342,12 +349,25 @@ MOUNT	TAX			;mount disk image on SD
 	ASL A			;*4
 	ASL A
 	TAY
-MOUNT1	INX
+	LDA #4			;4 bytes LBA
+MOUNT1	SEC
+	PHA
+	INX
 	LDA 0,X
 	STA IMGTAB,Y		;copy LBA block 0
 	INY
-	CPX #4			;4 bytes LBA
-	BCC MOUNT1
+	PLA
+	SBC #1
+	BNE MOUNT1
+	CLC
+	RTS
+
+MOUNT2	AND #$7F		;dismount drive
+	CMP #4			;max A: - D:
+	BCS MOU_ERR
+	TAY
+	LDA #$00		;set drive byte as invalid
+	STA IMGSTAT,Y
 	CLC
 	RTS
 
@@ -355,7 +375,25 @@ MOU_ERR	LDA #INVDRV		;invalid drive #
 	SEC
 	RTS
 
+
+RD_ABS	JSR SET_XY	; 12 read block absolute to BLKBUF
+	JMP SD_RD_LBLK_BUF
+
+
+WR_ABS	JSR SET_XY	; 13 write block absolute from BLKBUF
+	JMP SD_WR_LBLK_BUF
+
 ;====== SUBROUTINES =======
+
+SET_XY	TAX		;Load ZP vector L/H to X/Y
+	INX		;H first to Y
+	LDA 0,X
+	TAY
+	DEX
+	LDA 0,X		;L next to X
+	TAX
+	RTS
+
 
 SETLBA	LDX DRIVE
 	LDA IMGSTAT,X	;Check for valid image base adr
@@ -386,7 +424,7 @@ SETLBA1	LDA LBA,Y	;LBA = IMGTAB + SECS/2
 	RTS
 
 SETLBX	LDA #INVDRV
-	CLC
+	SEC
 	RTS
 
 
@@ -439,8 +477,8 @@ SD_WB	JSR PUSH_E0
 	LDX #LBA		;Write SD_ block pysically
 	LDY #LBA/256
 	JSR SD_WR_LBLK_BUF
-	BCS S_READX
 	JSR PULL_E0
+	BCS S_READX
 	SEC
 	RTS
 
@@ -458,24 +496,22 @@ SD_UPD	LDA LBA+3		;save LBA AND update LBA_FLAG
 	RTS
 
 
-PUSH_E0	LDX #$E3		;Save $E3..E0
-	LDY #4			;4 bytes to be saved
-PUSH_E1	LDA 0,X
+PUSH_E0				;Save $E3..E0
+	LDX #3			;4 bytes to be saved
+PUSH_E1	LDA $E0,X
 	STA E0BUF,X
 	DEX
-	DEY
-	BNE PUSH_E1
+	BPL PUSH_E1
 	RTS
 
 
-PULL_E0	LDX #$E3		;Save $E3..E0
-	LDY #4			;4 bytes to be saved
+PULL_E0				;Save $E3..E0
+	LDX #3			;4 bytes to be saved
 	PHA			;save A
 PULL_E1	LDA E0BUF,X
-	STA 0,X
+	STA $E0,X
 	DEX
-	DEY
-	BNE PULL_E1
+	BPL PULL_E1
 	PLA			;A & C unchanged
 	RTS
 
@@ -494,7 +530,7 @@ SD_RD_LBLK_BUF	JSR INIT_BLKBUF		; set pointer to block buffer
 ; *****************************************************************************
 ; Read Single Data Block from Logical Address
 ; Input:  X,Y = Ptr[LO:HI] to 32 Bit LBA Address
-;	  BLKBUF,BLKBUFH = 16 Bit Destination Address
+;	  BLKB = 16 Bit Destination Address
 ; Output: C = 0 Error, C = 1 Data OK
 ;	  A = Error Code
 ; *****************************************************************************
@@ -505,118 +541,40 @@ SD_RD_LBLK	JSR LOAD_LBA		; convert LBA CMD ADR
 ; *****************************************************************************
 ; Read Single Data Block
 ; Input:  SD_PB3..SD_PB0 = 32 Bit Command Block Address
-;         BLKBUF,BLKBUFH = 16 Bit Destination Address
+;         BLKB = 16 Bit Destination Address
 ; Output: C = 0 Error, C = 1 Read OK
 ;	  A = Error Code
 ; *****************************************************************************
 
-SD_RD_BLK	LDA	#CMD17		; send CMD17 (blk read)
-		JSR	SD_SEND_BLK_CMD
-		LDA	#DATA_TOKEN
-		JSR	SD_WAIT_TOKEN	; wait for data token $FE
-		CMP	#$FE		; is card ready for block read?
-		CLC
-		BNE	SD_RD_END	; did not receive data token, exit with C = 0
-		LDX	#$01		; initialize page counter
-		LDY	#$00		; initialize byte counter
-SD_RD_BLK0	STY YBUF
-		JSR	SPI_BIN		; read a byte
-		LDY YBUF
-		STA	(BLKB),Y	; and store it into the block buffer
-		INY			; increment destination pointer
-		BNE	SD_RD_BLK0	; pointer overflow? No, read next byte
-		INC	BLKB+1		; yes, increment block buffer page
-		DEX
-		BPL	SD_RD_BLK0	; two pages read? no, read next byte
-		INX
-SD_RD_BLK1	JSR	SPI_BIN		; yes, read 3 more bytes (CRC H, CRC L, dummy)
-		INX
-		CPX	#$03		; all 3 bytes read?
-		BNE	SD_RD_BLK1	; no, read next byte
-		SEC			; yes, all data read, set C = 1
-SD_RD_END	RTS
+SD_RD_BLK LDA #CMD17	; send CMD17 (blk read)
+	JSR	SD_SEND_CMD
+	BNE	SD_RESP_ERR	; response <> 0 check error type
+	LDA	#DATA_TOKEN	
+	LDX #0
+	STX T2CL	;set timer to 4 us/bit
+	LDA #DATA_TOKEN
+	JSR SD_WAIT_TOKEN	; wait for data token $FE
+	CMP #$FE	; is card ready for block read?
+	CLC
+	BNE SD_RD_END	; did not receive data token, exit with C = 0
+	LDX #$01	; initialize page counter
+	LDY #$00	; initialize byte counter
+SD_RD_BLK0 JSR	SPI_BIN	; read a byte
+	STA (BLKB),Y	; and store it into the block buffer
+	INY		; increment destination pointer
+	BNE SD_RD_BLK0	; pointer overflow? No, read next byte
+	INC BLKB+1	; yes, increment block buffer page
+	DEX
+	BPL SD_RD_BLK0	; two pages read? no, read next byte
+SD_RD_BLK1 JSR SPI_BIN	; yes, read 3 more bytes (CRC H, CRC L, dummy)
+	INX
+	CPX #$02	; all 3 bytes read?
+	BNE SD_RD_BLK1	; no, read next byte
+	LDX #5		;set timer to 14 us/bit
+	STX T2CL
+	SEC		; yes, all data read, set C = 1
+SD_RD_END RTS
 
-; *****************************************************************************
-; Write Single Data Block from Std. Block Buffer
-; Input:  SD_PB3..SD_PB0 = 32 Bit Command Block Address
-; Output: C = 0 Error, C = 1 Read OK
-;	  A = Error Code
-; *****************************************************************************
-
-SD_WR_BLK_BUF	JSR	INIT_BLKBUF	; set pointer to block buffer
-		BEQ	SD_WR_BLK
-
-; *****************************************************************************
-; Write Single Data Block from Std. Block Buffer to Logical Address
-; Input:  X,Y = Ptr[LO:HI] to 32 Bit LBA Address
-; Output: C = 0 Error, C = 1 Data OK
-;	  A = Error Code
-; *****************************************************************************
-
-SD_WR_LBLK_BUF	JSR	INIT_BLKBUF	; set pointer to block buffer
-					; fall through to sd_rd_lblk
-
-; *****************************************************************************
-; Write Single Data Block to Logical Address
-; Input:  X,Y = Ptr[LO:HI] to 32 Bit LBA Address
-;	  BLKBUF,BLKBUFH = 16 Bit Source Address
-; Output: C = 0 Error, C = 1 Data OK
-;	  A = Error Code
-; *****************************************************************************
-
-SD_WR_LBLK	JSR	LOAD_LBA		; convert LBA CMD ADR
-						; fall through to wr_rd_blk
-
-; *****************************************************************************
-; Write Single Data Block
-; Input:  SD_PB3..SD_PB0 = 32 Bit CommandBlock Address
-; Output: C = 0 Error, C = 1 Read OK
-;	  A = Error Code
-; *****************************************************************************
-
-SD_WR_BLK	LDA	#CMD24			; send CMD24 (blk write)
-		JSR	SD_SEND_BLK_CMD
-		CMP	#$FE			; is card ready for block write?
-		CLC
-		BNE SD_WR_END
-		JSR	SPI_OUT		; write data token
-		LDX	#$01			; initialize page counter
-		STX XBUF
-		LDY	#$00			; initialize byte counter
-SD_WR_BLK0	LDA	(BLKB),Y		; read next byte from buffer
-		STY YBUF
-		JSR	SPI_OUT		; and write it to the card
-		LDY YBUF
-		INY				; increment source pointer
-		BNE	SD_WR_BLK0		; pointer overflow? No, write next byte
-		INC	BLKB+1			; yes, increment block buffer page
-		DEC XBUF
-		BPL	SD_WR_BLK0		; two pages written? no, write next byte
-		JSR	SPI_BIN		; yes, send a (dummy) CRC ($FFFF)
-		JSR	SPI_BIN	
-		JSR	SPI_BIN			; read response byte
-		PHA
-SD_WR_BUSY	JSR	SPI_BIN			; read next byte
-		TAX
-		BEQ	SD_WR_BUSY		; check if busy ($00)
-		PLA
-		AND	#$1F			; mask result bits
-		CMP	#$05			; data accepted?
-		CLC
-		BNE	SD_WR_END		; no, exit with C = 0
-		SEC				; yes, exit with C = 1
-SD_WR_END	RTS
-
-; *****************************************************************************
-; Send Block Read or Write Command
-; Input :  A = Command (CMD17,CMD24)
-; Output : -
-; *****************************************************************************
-
-SD_SEND_BLK_CMD	JSR	SD_SEND_CMD
-		BNE	SD_RESP_ERR		; response <> 0 check error type
-		LDA	#DATA_TOKEN
-		RTS
 
 ; *****************************************************************************
 ; Check Error
@@ -636,6 +594,68 @@ SD_DISK_RW	LDA	#WRT_PROT
 SD_DISK_CHNG	LDA	#SD_CHNG
 		CLC
 		RTS
+
+
+; *****************************************************************************
+; Write Single Data Block from Std. Block Buffer to Logical Address
+; Input:  X,Y = Ptr[LO:HI] to 32 Bit LBA Address
+; Output: C = 0 Error, C = 1 Data OK
+;	  A = Error Code
+; *****************************************************************************
+
+SD_WR_LBLK_BUF	JSR	INIT_BLKBUF	; set pointer to block buffer
+					; fall through to sd_rd_lblk
+
+; *****************************************************************************
+; Write Single Data Block to Logical Address
+; Input:  X,Y = Ptr[LO:HI] to 32 Bit LBA Address
+;	  BLKB = 16 Bit Source Address
+; Output: C = 0 Error, C = 1 Data OK
+;	  A = Error Code
+; *****************************************************************************
+
+SD_WR_LBLK	JSR	LOAD_LBA		; convert LBA CMD ADR
+						; fall through to wr_rd_blk
+
+; *****************************************************************************
+; Write Single Data Block
+; Input:  SD_PB3..SD_PB0 = 32 Bit CommandBlock Address
+; Output: C = 0 Error, C = 1 Read OK
+;	  A = Error Code
+; *****************************************************************************
+
+SD_WR_BLK	LDA	#CMD24			; send CMD24 (blk write)
+		JSR	SD_SEND_CMD
+		BNE	SD_RESP_ERR		; response <> 0 check error type
+		LDA	#DATA_TOKEN
+		JSR	SPI_OUT		; write data token
+		LDX	#$01			; initialize page counter
+		STX XBUF
+		LDY	#$00			; initialize byte counter
+SD_WR_BLK0	LDA	(BLKB),Y		; read next byte from buffer
+		STY YBUF
+		JSR	SPI_OUT		; and write it to the card
+		LDY YBUF
+		INY				; increment source pointer
+		BNE	SD_WR_BLK0		; pointer overflow? No, write next byte
+		INC	BLKB+1			; yes, increment block buffer page
+		DEC XBUF
+		BPL	SD_WR_BLK0		; two pages written? no, write next byte
+		
+		JSR	SPI_BIN		; yes, send a (dummy) CRC ($FFFF)
+		JSR	SPI_BIN	
+		JSR	SPI_BIN			; read one dummy byte
+		JSR	SPI_BIN			; read response byte
+		PHA
+SD_WR_BUSY	JSR	SPI_BIN			; read next byte
+		BEQ	SD_WR_BUSY		; check if busy ($00)
+		PLA
+		AND	#$1F			; mask result bits
+		CMP	#$05			; data accepted?
+		CLC
+		BNE	SD_WR_END		; no, exit with C = 0
+		SEC				; yes, exit with C = 1
+SD_WR_END	RTS
 
 
 ; *****************************************************************************
@@ -745,9 +765,7 @@ SD_GET_VERS
 ; *****************************************************************************
 
 SD_WAIT_RESP3	LDY #$00
-READ_RESP3	STY YBUF
-		JSR SD_WAIT_RESP ;yes, receive 4 response bytes
-		LDY YBUF
+READ_RESP3	JSR SD_WAIT_RESP ;yes, receive 4 response bytes
 		STA SD_PB3,Y	;store response bytes in PB0..3
 		INY
 		CPY #$04
@@ -773,9 +791,8 @@ NEXT_PARAM	STA	SD_CMD,Y		; clear parameter byte
 ; *****************************************************************************
 
 SD_SEND_CMD	STA	SD_CMD
-		LDA PCR
-		AND #%11011111		;CS = 0
-		STA PCR
+		LDA #$01
+		STA DRB			;CS = 0, MOSI = 1
 		JSR	SPI_BIN		; send one dummy
 		LDX	#$00
 SEND_BYTE	STX XBUF
@@ -792,14 +809,14 @@ SEND_BYTE	STX XBUF
 ; Output: A = Response Byte
 ; *****************************************************************************
 
-SD_WAIT_RESP	LDX	#$08			; wait for max 8 cycles
+SD_WAIT_RESP	LDX	#$08		; wait for max 8 cycles
 READ_RESP1	JSR	SPI_BIN		; receive data
-		CMP	#$FF			; is it a $FF?
-		BNE	RESPONSE		; no, card did response
-		DEX				; yes, try again
-		BNE	READ_RESP1		; check for timeout
+		CMP	#$FF		; is it a $FF?
+		BNE	RESPONSE	; no, card did respond
+		DEX			; yes, try again
+		BNE	READ_RESP1	; check for timeout
 RESPONSE	TAX
-		TXA				; set proper status flags for A
+		TXA			; set proper status flags for A
 		RTS
 
 ; *****************************************************************************
@@ -810,10 +827,9 @@ RESPONSE	TAX
 
 SD_WAIT_TOKEN	STA	TEMP			; store token into TEMP variable
 		LDY	#$FF			; load low byte of time out counter
-		STY YBUF
 		LDX	#$0A			; load high byte of time out counter
 WAIT_RESP	JSR	SPI_BIN		; read byte from SPI
-		DEC YBUF				; decrement wait counter
+		DEY				; decrement wait counter
 		BNE	WAIT_RESP0
 		DEX
 		BEQ	WAIT_RESP_END		; wait counter is 0 -> time out
@@ -864,49 +880,69 @@ INIT_BLKBUF	LDA	#BLKBUF/256
 		STA	BLKB
 		RTS
 
+
 ;--- Junior SPI routines --------------------
 
-SPI_INIT LDA PCR
-	ORA #%11100000	;CS = 1
-	STA PCR
-	LDA #$40	;init VIA for SPI
-	STA DRB
-	LDA #%01000001	;MOSI = 1
-	STA DDRB
+SPI_INIT LDX #%00000011	;init VIA for SPI
+	STX DRB		;CS = 1, MOSI = 1
+	STX DDRB	;Bit 0  MOSI; Bit 1  CS
+	INX		;SR mode 010 = $04
+	STX ACR
+	LDA #0
+	STA T2CH
+	INX		;Timer2 = 14 us = $05
+	STX T2CL
+	STA SR
+	LDX #24		;wait 100(500) ms for (very) slow SD cards
+SPI_IN1	JSR SPI_IN2	;delay 4.3 ms
+	SBC #1
+	BCS SPI_IN1
+	DEX
+	BNE SPI_IN1
+SPI_IN2	RTS
+
+
+SPI_BIN	LDA IFR		;read byte from SPI
+	AND #$04	;test SR bit
+	BEQ SPI_BIN
+	STA IFR		;clear SR bit
+	LDA SR
 	RTS
 
 
-SPI_BIN	LDY #$40	;read byte from SPI
-	LDA #1		;set bit 0 as end marker
-SPIBIN1	STY DRB		;CLK = 0, MOSI=1
-	INC DRB		;CLK = 1
-	BPL SPIBIN2
-	SEC		;input a %1
-	ROL A
-	BCC SPIBIN1	;C=0 until bit 0 arrives
-	DEC DRB		;CLK = 0
-	RTS
-
-SPIBIN2	ASL A		;shift a 0 in A
-	BCC SPIBIN1	;C=0 until bit 0 arrives
-	DEC DRB		;CLK = 0
-	RTS
-
-
-SPI_OUT	LDX #0		;write A to SPI
-	LDY #%01000000	;byte to write a %1
+SPI_OUT	PHA		;write A to SPI
+SPIOUT1	LDA IFR		;read byte from SPI
+	AND #$04	;test SR bit
+	BEQ SPIOUT1
+	STA IFR		;clear SR bit
+	LDX #0
+	LDY #%00000001	;byte to write a %1
+	PLA
+	SEI
 	SEC		;set marker bit
 	ROL A		;Bit in C
-SPIOUT1	BCS SPIOUT2
-	STX DRB		;output a %0, CLK=0
-SPIOUT3	INC DRB		;CLK = 1
-	ASL A
-	BNE SPIOUT1	;marker bit in C
-	STY DRB		;CLK=0, MOSI=1
-	RTS
-
-SPIOUT2	STY DRB		;output a %1, CLK=0
+	BCS SPIOUT7
+	STX SR		;start T2
+	STX DRB		;set bit 7 = 0
+	ASL A		;shift bit 6 in C
 	BNE SPIOUT3
+
+SPIOUT7	STX SR		;start T2
+	STY DRB		;set bit 7 = 1
+	ASL A		;shift bit 6 in C
+	BNE SPIOUT3
+
+SPIOUT2	STX DRB		;output a %0
+	ASL A
+	BEQ SPIOUT4
+SPIOUT3	BIT $00		;3 us delay
+SPIOUT6	BCC SPIOUT2	;14 us per bit
+	STY DRB		;output a %1
+	ASL A
+	BNE SPIOUT3	;marker bit in C
+SPIOUT4	STY DRB		;CS = 0  MOSI = 1
+	CLI
+	RTS
 
 ; ********************************************
 
