@@ -1,4 +1,4 @@
-;DEBUG.COM -- CP/M-65 DEBUGGER
+;DEBUG.COM -- CP/M-65 DEBUGGER JC-II Version
 ;BY D. LAUSBERG	 (C)1989
 ;V1.2	14.06.90
 ;V1.3	06.02.91	ASM-65 Version, Disassembler
@@ -7,7 +7,8 @@
 ;V1.6	09.04.22	SEARCH, NFILE, error corrections
 ;V1.7	18.02.23	error correction dump would not stop
 ;V1.8	08.08.23	QUIT restores original IRQ vetor
-VERSION	= $18
+;V1.9	28.03.24	replaces IRQ routine, saves $F1 (destroyed by JC-II IRQ routine)
+VERSION	= $19
 
 ;SYSTEM CONSTANTS
 
@@ -19,9 +20,13 @@ CCPV	= $E0
 PNT	= $D8
 SA	= 0
 ZA	= 2
+STOACC	= $1A77
 TPA	= $2000
 MEMTOP	= $B800
+TAPEIRQ_OFF = $EF00
 IRQ	= $1A78
+IRQUSR	= $1A7C
+IRQVECT	= $1A7E
 
 ;BIOS COMMANDS
 
@@ -654,10 +659,24 @@ REPEA5	LDA #EOL
 	RTS
 
 ;====== BREAK-ENTRY ============= 
+IRQ_NEW STA STOACC	; save current accumulator
+	PLA		; get current processor status in A
+	SEI
+	PHA		; and push it back to stack
+	AND #$10	; mask break flag
+	BNE USRBRK	; if break flag set, jump to user break handler
+	LDA STOACC
+	RTI
+
+USRBRK	LDA	STOACC
+	JMP	(IRQ)
+
 
 BREAK	STA ACCU
 	STY YREG
 	STX XREG
+	LDA F1BUF	;restore $F1
+	STA $F1
 	PLA
 	STA STATUS
 	PLA
@@ -722,7 +741,10 @@ BREAK8	LDA #0
 
 ;======  SUBROUTINES  ============== 
 
-INIT	LDA IRQ
+INIT	LDA $F1		;save $F1
+	STA F1BUF
+	JSR TAPEIRQ_OFF
+	LDA IRQ
 	STA IRQBUF	;save IRQ vector
 	LDA IRQ+1
 	STA IRQBUF+1
@@ -730,6 +752,10 @@ INIT	LDA IRQ
 	STA IRQ
 	LDA #BREAK/256
 	STA IRQ+1
+	LDA #IRQ_NEW	;SET new IRQ VEKTOR
+	STA IRQVECT
+	LDA #IRQ_NEW/256
+	STA IRQVECT+1
 	LDX #3*MAXBNR
 	LDA #$FF
 INIT1	STA BTAB,X
@@ -1983,6 +2009,7 @@ ENDAD	DW 0
 CURAD	DW TPA
 
 IRQBUF	DW 0
+F1BUF	DB 0
 
 SRCBUF	DS 16
 
