@@ -266,7 +266,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
     <p><a title="Software List" a=""> -------------------- <br>
       </a></p>
     <p><a title="Software List" a="">The Junior Computer II port of CPM-65 is
-        currently work in a beta stage. Please report errors and crashesin the ISSUE section <br>
+        currently work in a beta stage. Please report errors and crashes in the ISSUE section <br>
       </a></p>
     <p><a title="Software List" a="">The CPM-65 system itself has now seen more
         than 30 years of service. Currently there are no known errors. <br>
