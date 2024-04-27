@@ -1,5 +1,4 @@
 ;CP/M-65 BDOS Junior Computer II Version
-;Testvesion JC
 ;D. LAUSBERG	(C) 1988
 ;V1.0	21.01.88
 ;V1.1	24.05.89	SOME CORRECTIONS

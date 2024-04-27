@@ -135,7 +135,7 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 
 ;---  MESSAGES  -----------------------------
 
-BOOTM	DB CR,'CP/M-65 for JC-II Boot Image Loader V'
+BOOTM	DB CR,CR,'CP/M-65 for JC-II Boot Image Loader V'
 	DB VERSION/16+$30,'.',VERSION*$1000/$1000+$30,CR,CR,EOT
 ERRM	DB CR,'BOOT failed',CR,EOT
 ERR1M	DB CR,'no DIR or image found',CR,EOT

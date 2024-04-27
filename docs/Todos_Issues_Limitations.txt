@@ -1,8 +1,7 @@
 ToDo's, Issues & Limitations
 
 ToDo's
-Write Bootloader
-define a mechanism to tell CPM-65 which images are mounted for each drive
+
 
 Issues
 
