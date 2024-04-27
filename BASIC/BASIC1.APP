@@ -1,4 +1,4 @@
-;BASIC1.APP  Apple II Version
+;BASIC1.APP  JC II Version
 ;BASIC.COM  Microsoft compatible 6502 BASIC
 ;APPEND FILE 1
 ;D. Lausberg	(c) 1995
@@ -6,6 +6,7 @@
 ;V1.4	06.03.96
 ;V1.4a	10.05.21		;CHRIN AND #$7F
 ;V1.5	12.06.22		;LOAD_IMM implemented
+;V1.6	25.04.24	JC-II adaption
 
 CHR	JSR TRMCAL1		;CHR$ COMMAND
 	TXA

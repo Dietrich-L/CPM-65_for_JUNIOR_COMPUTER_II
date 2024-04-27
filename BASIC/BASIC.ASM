@@ -8,7 +8,8 @@
 ;V1.3	17.01.96	upper case conversion, PI
 ;V1.4	06.03.96	printer,disk support
 ;V1.5	12.06.22	BASIC filename implemented
-Version = $15
+;V1.6	25.04.24	JC-II adaption
+Version = $16
 
 ;Parameters
 ZERO	= $00		;ZERO PAGE
@@ -1556,12 +1557,10 @@ LET5	LDY P_FUNC
 	JSR A1MUL10
 	JSR FN_INT
 	LDX #2
-	SEI
 LET7	LDA F_ACCU1+2,X
 	STA CLOCK,X
 	DEX
 	BPL LET7
-	CLI
 	RTS
 
 
@@ -1707,7 +1706,7 @@ PRT	LDA IO_CHAN		;PRINT 1 CHR
 	BEQ PRT_SP
 	LDA #SP
 	DB BIT_ABS
-PRT_SP	LDA #HT
+PRT_SP	LDA #SP			;for VT-100 compatibility, was $09
 	DB BIT_ABS
 PRT_3F	LDA #'?
 PRT_CHR	BIT OUT_F
@@ -2251,9 +2250,7 @@ SBVAR3	BIT F_ACCU1+4
 
 SBVAR2	LDA #CLOCK-2
 	LDY #CLOCK-2/256
-	SEI
 	JSR FIL_A1
-	CLI
 	STY F_ACCU1+1
 	RTS
 
