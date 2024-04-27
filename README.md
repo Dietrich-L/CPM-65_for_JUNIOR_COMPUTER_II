@@ -17,7 +17,7 @@ This repository contains the Junior Computer II Port of CPM-65, <br>a CP/M-80 an
 Junior Computer II
 Expansion Card
 
-I don't own a Junior Computer II. So all testing is done by <br>Joerg Walke, Developer of the Junior Computer II system, and Norbert J.
+Special thanks for support and testing goes to <br>Joerg Walke, Developer of the Junior Computer II system, Norbert J. and Edzard
 
 <br>&nbsp; System Structure
 --------------------
@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">0.7<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">0.9<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -142,7 +142,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">DEBUG<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.8<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.9<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Debugger,
                 8 breakpoints, stepping, disassembler,...<br>
@@ -204,7 +204,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           </tr>
           <tr>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD-UTIL</span></a></td>
-            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.2</span></a></td>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.3</span></a></td>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD
                   utility for image handling and sector inspection<br>
                 </span></a></td>
@@ -266,7 +266,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
     <p><a title="Software List" a=""> -------------------- <br>
       </a></p>
     <p><a title="Software List" a="">The Junior Computer II port of CPM-65 is
-        currently work in progress. Expect errors and crashes. <br>
+        currently work in a beta stage. Please report errors and crashesin the ISSUE section <br>
       </a></p>
     <p><a title="Software List" a="">The CPM-65 system itself has now seen more
         than 30 years of service. Currently there are no known errors. <br>
