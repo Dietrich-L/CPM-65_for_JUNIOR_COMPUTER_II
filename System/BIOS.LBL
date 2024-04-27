@@ -1,8 +1,9 @@
-DIRBF                            $DBE3  DMA                              $DAE3  
-X_CNT                            $DAE2  IOBBUF                           $DAE0  
-E0BUF                            $DADC  PULLIOB                          $DAD1  
-PUSHIOB                          $DABD  PULL_E1                          $DAB2  
-PULL_E0                          $DAAD  PUSH_E1                          $DAA3  
+DIRBF                            $DBF9  DMA                              $DAF9  
+X_CNT                            $DAF8  YSAVBUF                          $DAF7  
+IOBBUF                           $DAF5  TEMPBUF                          $DAF4  
+E0BUF                            $DAF0  PULLIOB                          $DAE0  
+PUSHIOB                          $DAC7  PULL_E1                          $DAB7  
+PULL_E0                          $DAB2  PUSH_E1                          $DAA3  
 PUSH_E0                          $DA9F  SD_UPD                           $DA81  
 SD_WB                            $DA6A  S_SAVEX                          $DA68  
 S_SAVE                           $DA51  S_READX                          $DA4C  
@@ -45,10 +46,9 @@ SD_RD_LBLK_BUF                   $F45F  SD_INIT                          $F38F
 ROM_CONOUT                       $E044  ROM_CONIN                        $E047  
 CGET                             $E04D  BEGIN                            $D800  
 CCP                              $CC00  BLKBUF                           $0600  
+YSAV                             $00FD  TEMP                             $00FC  
 IOB                              $0014  MODE                             $001A  
 JPBDOS                           $00F0  DPHV                             $00F8  
 BLKB                             $00FA  DIRBFV                           $00FC  
-DMAV                             $00FE  VERSION                          $0008  
-$001A  
-JPBDOS                           $00F0  DPHV                             $00F8  
-BLKB                             $00FA  DIRBFV                           $00FC
+DMAV                             $00FE  VERSION                          $0009  
+$001A

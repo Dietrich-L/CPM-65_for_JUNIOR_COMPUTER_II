@@ -10,8 +10,9 @@
 ;V0.6	14.08.23	MOUNT error corrected
 ;V0.7	13.09.23	no IRQs
 ;V0.8	14.01.24	error correction
+;V0.9	25.04.24	$FC & $FD buffered
 
-VERSION	= $08		;VERSION NUMBER
+VERSION	= $09		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -26,6 +27,8 @@ DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
 MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
 IOB	= $14
+TEMP	= $FC
+YSAV	= $FD
 
 ;SYSTEM CONSTANTS
 
@@ -452,6 +455,8 @@ PUSH_E1	LDA 0,X
 	DEX
 	DEY
 	BPL PUSH_E1
+	LDA TEMP		;save $FC
+	STA TEMPBUF
 	RTS
 
 
@@ -463,6 +468,8 @@ PULL_E1	LDA E0BUF,Y
 	DEX
 	DEY
 	BPL PULL_E1
+	LDA TEMPBUF		;restore $FC
+	STA TEMP
 	PLA			;A & C unchanged
 	RTS
 
@@ -474,17 +481,23 @@ PUSHIOB	LDA IOB			;save $14/$15
 	STA IOB
 	LDA IOBASEH
 	STA IOB+1
+	LDA YSAV		;save $FD
+	STA YSAVBUF
 	RTS
 
 
-PULLIOB	LDA IOBBUF			;restore $14/$15
+PULLIOB	LDA IOBBUF		;restore $14/$15
 	STA IOB
 	LDA IOBBUF+1
 	STA IOB+1
+	LDA YSAVBUF		;restore $FD
+	STA YSAV
 	RTS
 
 E0BUF	DS 4,0
+TEMPBUF	DB 0
 IOBBUF	DS 2,0
+YSAVBUF	DB 0
 
 X_CNT	DB 0
 	
