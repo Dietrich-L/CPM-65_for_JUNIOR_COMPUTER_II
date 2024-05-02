@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">0.9<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.0<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -266,7 +266,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
     <p><a title="Software List" a=""> -------------------- <br>
       </a></p>
     <p><a title="Software List" a="">The Junior Computer II port of CPM-65 is
-        currently work in a beta stage. Please report errors and crashes in the ISSUE section <br>
+        now in V1.0 and reasonably stable. Please report errors and crashes in the ISSUE section <br>
       </a></p>
     <p><a title="Software List" a="">The CPM-65 system itself has now seen more
         than 30 years of service. Currently there are no known errors. <br>
