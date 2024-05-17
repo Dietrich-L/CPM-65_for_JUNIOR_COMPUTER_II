@@ -4,8 +4,9 @@
 ;V1.1	09.01.24	FAT32 support
 ;V1.2	11.01.24	Logon command removed, read LBA command added
 ;V1.3	06.03.24	code improvements and error corrections
+;V1.4	17.05.24	switch to STD ROM routines
 
-VERSION	= $13
+VERSION	= $14
 
 ;SYSTEM CONSTANTS
 DMA	=  $FE
@@ -23,8 +24,13 @@ BUFBEG	=  $8000
 
 BIOSV	= $D800		;BIOS start adress
 
-SD_RD_LBLK_BUF = $F45F	;load sector in LBA to BLKBUF
-SD_WR_LBLK_BUF = $F492	;save sector in BLKBUF to LBA
+CMDDEV	= $E0BA
+OPEN_DEVICE = $E1AA
+
+; Device Command Constants ****************************************************
+
+CMD_READ_BUF = 37
+CMD_WRITE_BUF = 38
 
 ;Zero Page adresses
 
@@ -1102,14 +1108,16 @@ S_READ	BIT LBA_F		;SD_READ
 	BCS S_READX
 S_READ1	LDX #LBA		;load LBA to BLKBUF
 	LDY #LBA/256
-	JSR SD_RD_LBLK_BUF
+	LDA #CMD_READ_BUF
+	JSR CMDDEV
 	BCS S_READX
 S_READC	SEC
 	RTS
 
 SD_WB	LDX #LBA		;Write SD_ block pysically
 	LDY #LBA/256
-	JSR SD_WR_LBLK_BUF
+	LDA #CMD_WRITE_BUF
+	JSR CMDDEV
 	BCC S_READC		;Error
 
 S_READX	LDX #3			;save LBA AND update LBA_FLAG
@@ -1125,7 +1133,8 @@ SD_UPD1	LDA LBA,X
 
 S_SAVE	LDX #LBA_B		;save old buffer to SD
 	LDY #LBA_B/256
-	JSR SD_WR_LBLK_BUF
+	LDA #CMD_WRITE_BUF
+	JSR CMDDEV
 	BCC S_READC
 	CLC
 	RTS
