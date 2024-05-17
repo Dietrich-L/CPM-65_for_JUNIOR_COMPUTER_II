@@ -71,7 +71,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BASIC<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.5<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.6<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Microsoft
                 Basic interpreter<br>
@@ -204,7 +204,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           </tr>
           <tr>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD-UTIL</span></a></td>
-            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.3</span></a></td>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.4</span></a></td>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD
                   utility for image handling and sector inspection<br>
                 </span></a></td>
@@ -237,11 +237,11 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
               </span></td>
           </tr>
           <tr>
-            <td><span style="font-family: Courier New,Courier,monospace;"><br>
+            <td><span style="font-family: Courier New,Courier,monospace;">XMODEM<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;"><br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.2<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;"><br>
+            <td><span style="font-family: Courier New,Courier,monospace;">File transfer XMODEM protocol, via serial I/O 19200 Baud<br>
               </span></td>
           </tr>
         </tbody>
