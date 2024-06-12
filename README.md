@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.0<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.1<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -101,6 +101,15 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BOOT program in track 0, sector 0<br>
+              </span></td>
+          </tr>
+           <tr>
+            <td><span style="font-family: Courier New,Courier,monospace;">BOOTSYS<br>
+              </span></td>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.8<br>
+              </span></td>
+            <td><span style="font-family: Courier New,Courier,monospace;">JC II
+                CPM-65 BOOT program on SD, main directory<br>
               </span></td>
           </tr>
           <tr>
@@ -133,7 +142,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">D<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.2<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.3<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">show
                 directory alphabetically sorted<br>
@@ -204,7 +213,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           </tr>
           <tr>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD-UTIL</span></a></td>
-            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.4</span></a></td>
+            <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">1.5</span></a></td>
             <td><a title="CIFE"><span style="font-family: Courier New,Courier,monospace;">SD
                   utility for image handling and sector inspection<br>
                 </span></a></td>
