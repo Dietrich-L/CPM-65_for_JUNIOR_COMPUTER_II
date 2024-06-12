@@ -4,9 +4,10 @@
 ;V1.1	09.01.24	FAT32 support
 ;V1.2	11.01.24	Logon command removed, read LBA command added
 ;V1.3	06.03.24	code improvements and error corrections
-;V1.4	17.05.24	switch to STD ROM routines
+;V1.4	17.05.24	switch to STD ROM routines and error corrections
+;V1.5	07.06.24	sets IOBASE from BIOS
 
-VERSION	= $14
+VERSION	= $15
 
 ;SYSTEM CONSTANTS
 DMA	=  $FE
@@ -49,6 +50,10 @@ HEXY	= $0D
 DIVL	= $0E
 DIVM	= $0F
 DIVH	= $10
+
+IOBASE	= $14		;I/O-card base address
+
+MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
 
 DRIVE	= $20
 ERRNO	= $21
@@ -132,8 +137,11 @@ DUTIL1	JSR DECODE		;DECODE AND EXEC COMMAND
 	JMP DUTILL
 
 
-INIT	LDA #0			;RESET VARIABLES
-	LDX #$10
+INIT	LDY #18			;set IOBASE from BIOS
+	LDA (DPH),Y
+	STA IOBUF
+	LDA #0			;RESET VARIABLES
+	LDX #$40
 INIT2	STA 0,X
 	DEX
 	BPL INIT2
@@ -147,6 +155,7 @@ INIT2	STA 0,X
 	STA DMA+1
 	JSR DRVPAR		;GET DRIVE PARAM'S
 	JSR READS		;read sector 0
+	BCS INIT1
 	RTS
 
 INIT1	JSR ERROR
@@ -1084,6 +1093,12 @@ SETLBA0	LDA SEC,Y	;SEC/2
 	STA LBA,Y
 	DEY
 	BPL SETLBA0
+	LDA #$40	;set mode byte
+	STA MODE
+	LDA #0		;set IOBASE
+	STA IOBASE
+	LDA IOBUF
+	STA IOBASE+1
 	CLC
 	RTS
 
@@ -1295,6 +1310,8 @@ NDIR	DW 0
 
 N32	DS 4,0		;32 bit argument
 
+IOBUF	DB $00		;buffer for IOBASE
+
 ;--------------
 
 STATM1	DB CR,LF,'SD-UTIL V',VERSION/16+$30,'.',VERSION*$1000/$1000+$30
@@ -1336,4 +1353,3 @@ DMABUF
 IMG_LBA	= DMABUF+256		;Image LBAs
 
 	END
-
