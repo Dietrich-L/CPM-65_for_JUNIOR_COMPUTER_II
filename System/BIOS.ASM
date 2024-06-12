@@ -12,8 +12,9 @@
 ;V0.8	14.01.24	error correction
 ;V0.9	25.04.24	$FC & $FD buffered
 ;V1.0	29.04.24	$1A buffered
+;V1.1	17.05.24	switch to STD ROM routines,CONST corrected
 
-VERSION	= $10		;VERSION NUMBER
+VERSION	= $11		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -38,14 +39,27 @@ BLKBUF	=  $600		;default buffer
 CCP	= $CC00
 BEGIN	= $D800
 
+ROM_MONITOR = $E000	;Monitor cold start
 CGET = $E04D		;CGET
 ROM_CONIN = $E047	;CIN
 ROM_CONOUT = $E044	;BOUT
-SD_INIT	= $F38F		;SD card initialization
-SD_RD_LBLK_BUF = $F45F	;load sector in LBA to BLKBUF
-SD_WR_LBLK_BUF = $F492	;save sector in BLKBUF to LBA
+CMDDEV	= $E0BA
+OPEN_DEVICE = $E1AA
 
-ROM_MONITOR = $E000	;Monitor cold start
+; Device IDs *******************************************************************
+
+NULL_ID	= $00		; the NULL device
+FDD1_ID = $22		; Floppy drive 1 device ID
+FDD2_ID = $23		; Floppy drive 2 device ID
+SDC1_ID	= $24		; SD on I/O card
+
+; Device Command Constants ****************************************************
+
+CMD_INIT = 0
+
+CMD_BOOT = 36
+CMD_READ_BUF = 37
+CMD_WRITE_BUF = 38
 
 ;CONTROL CODES
 
@@ -158,9 +172,11 @@ WBOOT	SEI		;no IRQ's allowed
 CONST	JSR PUSHIOB
 	JSR CGET
 	JSR PULLIOB
-	LDA #BREAKC
 	BCS CONST1
 	LDA #0
+	SEC
+	RTS
+
 CONST1	CLC
 	RTS
 
@@ -218,7 +234,7 @@ SETTRK	LDA #$FB		;Sector not found
 
 
 READ	JSR PUSH_E0
-	JSR SETLBA		;SET LBA = IMGTAB + SECS/2
+READ0	JSR SETLBA		;SET LBA = IMGTAB + SECS/2
 	BCS SD_RDX
 	JSR CHKBLK		;CHECK IF BLOCK VALID
 	BCC SD_RD1
@@ -242,15 +258,16 @@ SD_RD5	JSR PULL_E0
 	CLC
 	RTS
 
-SD_RD4	JSR SD_INIT		;on error retry
-	BCS READ
+SD_RD4	LDA #CMD_INIT		;on error retry
+	JSR CMDDEV
+	BCS READ0
 	JSR PULL_E0
 	SEC
 SD_RDX	RTS
 
 
 WRITE	JSR PUSH_E0
-	JSR SETLBA		;WRITE SD card
+WRITE0	JSR SETLBA		;WRITE SD card
 	BCS SD_RDX
 	JSR CHKBLK
 	BCC SD_WR1
@@ -287,8 +304,9 @@ SD_WR5	JSR PULL_E0
 	CLC
 	RTS
 
-SD_WRE	JSR SD_INIT		;on error 1 retry
-	BCS WRITE
+SD_WRE	LDA #CMD_INIT		;on error retry
+	JSR CMDDEV
+	BCS WRITE0
 	JSR PULL_E0
 	SEC
 	RTS
@@ -399,45 +417,35 @@ S_READ	BIT LBA_F		;SD_READ
 	BCS S_READX
 S_READ1	LDX #LBA		;load LBA to BLKBUF
 	LDY #LBA/256
-	JSR SD_RD_LBLK_BUF
+	LDA #CMD_READ_BUF
+	JSR CMDDEV
 	BCS S_READX
-	SEC
+S_READC	SEC
 	RTS
 
-S_READX	JSR SD_UPD		;UPDATE BLK/FLAG INFO
+SD_WB	LDX #LBA		;Write SD_ block pysically
+	LDY #LBA/256
+	LDA #CMD_WRITE_BUF
+	JSR CMDDEV
+	BCC S_READC		;Error
+
+S_READX	LDX #3			;save LBA AND update LBA_FLAG
+SD_UPD1	LDA LBA,X
+	STA LBA_B,X
+	DEX
+	BPL SD_UPD1
+	LDA #0
+	STA LBA_F
 	CLC
 	RTS
 
 
 S_SAVE	LDX #LBA_B		;save old buffer to SD
 	LDY #LBA_B/256
-	JSR SD_WR_LBLK_BUF
-	BCC S_SAVEX
+	LDA #CMD_WRITE_BUF
+	JSR CMDDEV
+	BCC S_READC
 	CLC
-	RTS
-
-S_SAVEX	SEC
-	RTS
-
-
-SD_WB	LDX #LBA		;Write SD_ block pysically
-	LDY #LBA/256
-	JSR SD_WR_LBLK_BUF
-	BCS S_READX
-	SEC
-	RTS
-
-
-SD_UPD	LDA LBA+3		;save LBA AND update LBA_FLAG
-	STA LBA_B+3
-	LDA LBA+2
-	STA LBA_B+2
-	LDA LBA+1
-	STA LBA_B+1
-	LDA LBA
-	STA LBA_B
-	LDA #0
-	STA LBA_F
 	RTS
 
 
