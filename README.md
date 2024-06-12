@@ -248,7 +248,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">XMODEM<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.2<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.3<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">File transfer XMODEM protocol, via serial I/O 19200 Baud<br>
               </span></td>
