@@ -9,7 +9,11 @@
 ;V1.3	09.01.24	FAT32 & FAT16 support
 ;V1.4	14.01.24	HEXOUT replaced by HEXDIG
 ;V1.5	20.02.24	error correction LF's removed, uses COUT
-Version = $15
+;V1.6	08.05.24	IRQs shut down
+;V1.7	17.05.24	switch to STD ROM routines
+;V1.8	08.06.24	buffering SD_TYPE & IOBASE+1 corrected
+Version = $18
+
 
 ;Parameter
 
@@ -29,7 +33,6 @@ CNT_Y	= $36		;counter
 TEMP	= $37   	;temp storage
 MCNT	= $38
 
-DMA	= $FE		;DMA-Vector
 DPH	= $F8		;DPH-VECTOR
 NUM32	= $F8     	;LBA vector to 1. Cluster of disc image
 
@@ -39,9 +42,16 @@ SD_TYPE	= $1A
 IOBASE	= $14
 PSTR	= $EA
 
+BLKB	= $600
+
 TPA	= $2000
 CCP	= $CC00
 BIOS	= $D800
+BDOSBEG	= $D000
+
+IRQ	= $1A78
+IRQUSR	= $1A7C
+IRQVECT	= $1A7E
 
 ;BIOS COMMANDS
 
@@ -66,7 +76,9 @@ GETCHR	= $E047		;CIN
 STROUT	= $E083		;string out adr in PSTR
 HEXDIG	= $E09A		;print HEX in A
 PRTCHR	= $E052		;COUT
-SD_RD_LBLK = $F462	;load sector in LBA to (BLKBUF)
+CMDDEV	= $E0BA
+
+CMD_READ = 34		;load sector in LBA to (BLKBUF)
 
 ROM_MONITOR = $E000	;Monitor cold start
 
@@ -76,6 +88,11 @@ ROM_MONITOR = $E000	;Monitor cold start
 BOOT	LDA #BOOTM		;print boot message
 	LDY #BOOTM/256
 	JSR PRTSTR
+	SEI			;shut down IRQs
+	LDA SD_TYPE		;save SD_TYPE
+	STA SD_TYPB
+	LDA IOBASE+1		;save IOBASE high
+	STA IOBUF
 	LDY #3			;set LBA to current file
 BOOT3	LDA NUM32,Y
 	STA LBA,Y
@@ -84,10 +101,9 @@ BOOT3	LDA NUM32,Y
 	LDA #3			;load 3 sectors more
 	STA MCNT
 BOOT4	JSR INCLBA		;load next sector
-	LDX #LBA
-	LDY #LBA/256
-	JSR SD_RD_LBLK		;read 512 bytes from SD to BLKBUF
-	BCC B_ERR
+	JSR R_LBA		;read 512 bytes from SD to (BLKBUF)
+	BCS B_ERR
+	SEC
 	DEC MCNT
 	BNE BOOT4
 	JSR SEL_BOOT_DISK	;select boot disk
@@ -98,10 +114,8 @@ BOOT4	JSR INCLBA		;load next sector
 	LDA #CCP/256
 	STA BLKBUF+1
 BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
-	LDX #LBA
-	LDY #LBA/256
-	JSR SD_RD_LBLK		;read 512 bytes from SD to CCP
-	BCC B_ERR
+	JSR R_LBA		;read 512 bytes from SD to CCP
+	BCS B_ERR
 	LDA BLKBUF+1
 	CMP #ROM_MONITOR/256	;all sector read?
 	BCC BOOT1
@@ -110,11 +124,11 @@ BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
 	BCS B_ERR
 	JSR SELDSK*3+BIOS	;BIOS SELDSK command
 	LDY #17
-	LDA SD_TYPE
+	LDA SD_TYPB
 	STA (DPH),Y		;save SD_TYPE to BIOS
 	INY
-	LDA IOBASE+1
-	STA (DPH),Y		;save SD_TYPE to BIOS
+	LDA IOBUF
+	STA (DPH),Y		;save IOBASE high to BIOS
 	JMP BIOS		;COLD BOOT
 
 B_ERR1	LDA #ERR1M
@@ -133,6 +147,9 @@ BOOT_X	BRK			;Break to Monitor
 IMG_SIZ	DB 0,0,$10,0	;image size 1 MB
 MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 
+SD_TYPB	DB 0
+IOBUF	DB 0
+
 ;---  MESSAGES  -----------------------------
 
 BOOTM	DB CR,CR,'CP/M-65 for JC-][ Boot Image Loader V'
@@ -150,6 +167,23 @@ INCLBA1	INC LBA,X
 	CPX #4
 	BCC INCLBA1
 INCLBAX	RTS
+
+
+R_LBA_B	LDA #BLKB/256		;read sector in LBA to BLKB
+	STA BLKBUF+1		;BLKBUF = BLKB
+	LDA #BLKB
+	STA BLKBUF
+
+R_LBA	LDX #LBA		;read sector in LBA to (BLKBUF)
+	LDY #LBA/256
+	LDA #CMD_READ
+	JSR CMDDEV		;read 512 bytes from SD
+	BCC R_LBA1
+	CLC
+	RTS
+
+R_LBA1	SEC			;Error
+	RTS	
 
 
 PRTSTR	STA PSTR		;print message
@@ -283,7 +317,7 @@ DISINFX SEC			;Error
 	RTS
 
 
-DIS_FN	LDA #BLKB		;DIR_FNP = DMA + PNT
+DIS_FN	LDA #BLKB		;DIR_FNP = BLKB + PNT
 	STA DIR_FNP
 	LDA #BLKB/256
 	STA DIR_FNP+1
@@ -478,27 +512,10 @@ PRT_FNX	RTS
 
 ;---------------------------------------------
 
-R_LBA_B	LDA #BLKB/256		;BLKBUF = BLKB
-	STA BLKBUF+1
-	LDA #BLKB
-	STA BLKBUF
-
-R_LBA	LDX #LBA		;read sector in LBA to BLKBUF
-	LDY #LBA/256
-	JSR SD_RD_LBLK		;read 512 bytes from SD
-	BCC R_LBA1
-	CLC
-	RTS
-
-R_LBA1	SEC			;Error
-	RTS	
-
-
-BLKB 
-IMG_LBA	= BLKB+512		;Image LBAs
+IMG_LBA				;Image LBAs
 
 MEM
-	DS $2800-MEM,$00		;SPACE FILLED UP TO 4 SECTORS
+	DS $2800-MEM,$00	;SPACE FILLED UP TO 4 SECTORS
 
 TOP
 	END
