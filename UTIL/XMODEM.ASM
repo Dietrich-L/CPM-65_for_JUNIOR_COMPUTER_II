@@ -8,9 +8,10 @@
 ;V1.3	23.12.22	correct file length
 ;V2.0	27.12.22	send & receive
 ;V2.1	02.01.23	some improvements & cleanup
-;V2.2	22.01.23	Speed improvement, preset to 9600 Baud
+;V2.2	22.01.23	Speed improvement
+;V2.3	20.05.24	check for mem overflow on receive
 
-VERSION	= $22		;VERSION NUMBER
+VERSION	= $23		;VERSION NUMBER
 ;================================================
 
 ;KONSTANTEN
@@ -26,9 +27,9 @@ XEOT	= $04		; end of text marker
 ACK	= $06		; good block acknowledged
 NAK	= $15		; bad block acknowledged
 CAN	= $18		; cancel (not standard, not supported)
-CR	= $0d		; carriage return
-LF	= $0a		; line feed
-ESC	= $1b		; ESC to exit
+CR	= $0D		; carriage return
+LF	= $0A		; line feed
+ESC	= $1B		; ESC to exit
 
 ;ERROR CODES
 
@@ -213,10 +214,8 @@ GoodBlk1
 	INX
 	CMP RBUFF,X	; compare with expected 1's comp of block #
 	BEQ GoodBlk2 	; matched!
-BadBlk	JSR FLUSH	; mismatched - flush buffer
-	LDA #CAN	; end transfer
-	JSR PUT_CHR	; END OF CRITICAL PHASE
-	lda #X_BLK	; unexpected block # - fatal error
+BadBlk	JSR TERM	; mismatched - flush buffer
+	LDA #X_BLK	; unexpected block # - fatal error
 	SEC
 	RTS
 	
@@ -252,12 +251,29 @@ IncBlk	INC BLKNO	; done.  Inc the block #
 	STA PTR
 	BCC INCBLK1
 	INC PTR+1
-INCBLK1	LDA #ACK	; send ACK
+INCBLK1	LDY PTR+1	;check for end of memory
+	INY
+	CPY BDOS+2	;test HIMEM
+	BCS INCBLK2
+	LDA #ACK	; send ACK
 	JMP StartBlk	; get next block
+
+INCBLK2	JSR TERM		;terminate XMODEM receive
+	lda #FILE_TOO_LONG	;fatal error
+	SEC
+	RTS
+
+
+TERM	LDX #3		;terminate XMODEM receive
+TERM1	LDA #CAN	;end transfer
+	JSR PUT_CHR
+	DEX
+	BNE TERM1
+	JSR FLUSH	; flush buffer
+	RTS
 
 
 ;^^^^^^^^^^^^^^^^^^^^^^ Start of XModem send ^^^^^^^^^^^^^^^^^^^^^^
-
 ;
 ; Enter this routine with the ending address stored in DMA
 ;
