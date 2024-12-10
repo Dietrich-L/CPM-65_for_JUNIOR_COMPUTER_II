@@ -10,8 +10,9 @@
 ;V2.1	02.01.23	some improvements & cleanup
 ;V2.2	22.01.23	Speed improvement
 ;V2.3	20.05.24	check for mem overflow on receive
+;V2.4	10.12.24	ACIA direct adressing
 
-VERSION	= $23		;VERSION NUMBER
+VERSION	= $24		;VERSION NUMBER
 ;================================================
 
 ;KONSTANTEN
@@ -64,8 +65,12 @@ _CHROUT	= 4
 
 RBUFF	= $1500		;132 byte receive buffer (page aligned)
 
-STARTRcv = $EF50
-STARTSnd = $
+; ACIA Registers ***************************************************************
+
+DATA_REG = $1600    	; ACIA Data Register
+STAT_REG = $1601    	; ACIA Status Register
+COMM_REG = $1602    	; ACIA Command Register
+CTRL_REG = $1603    	; ACIA Control Register
 
 TPA	= $2000
 
@@ -77,13 +82,13 @@ LENGTH	= ZP+1
 ERRNO	= ZP+2		;ERROR NR
 PNT	= ZP+3
 SWITCH	= ZP+4
-CRC	= ZP+5		; CRC lo byte  (two byte variable)
-PTR	= ZP+7		; data pointer (two byte variable)
-blkno	= ZP+9		; block number 
-YBUF	= ZP+10		; Y buffer
-XBUF	= ZP+11
+CRC	= ZP+5		;CRC lo byte  (two byte variable)
+PTR	= ZP+7		;data pointer (two byte variable)
+blkno	= ZP+9		;block number 
+YBUF	= ZP+10		;Y buffer
+XBUF	= ZP+11		;X buffer
 
-errcnt	= ZP+14		; error counter for resend
+errcnt	= ZP+14		;error counter for resend
 lastblk	= ZP+15		;flag for last block to be sent
 CHR	= ZP+16		;chr from CON
 
@@ -130,7 +135,8 @@ START3	LDX #WRITE
 	LDX #CLOSE
 	JSR BDOS
 	BCS STERR
-START4	LDA #SUCCESS
+START4	JSR FLUSH
+	LDA #SUCCESS
 	LDY #SUCCESS/256
 	JSR PRTSTR
 BOOT	LDX #0
@@ -174,9 +180,10 @@ XModem	LDA #LOMEM	;set PTR to LOMEM for file storage
 	STA BLKNO
 	LDA #20		; max. 20 errors
 	STA ERRCNT
-	SEI		; no IRQ from here	
+	SEI		; no IRQ from here
+	JSR FLUSH	
 StartCrc
-	LDA #'C		; C STArt transmission CRC option
+	LDA #'C		; C Start transmission CRC option
 	JSR PUT_CHR	; send it
 	JSR GET_BYTE	; wait for input
 	BCC GotByte	; byte received, process it
@@ -305,6 +312,7 @@ LdBuffer
 	beq LdBuff0	; no, send the next one	
 	LDA #XEOT	; send EOT
 	JSR PUT_CHR	; END OF CRITICAL PHASE
+
 	CLC
 	RTS		; yes, we're done
 
@@ -454,39 +462,34 @@ crchi
 ; character was sent upon return from this routine.
 ;
 GET_Byte		;BIOS chr input with IRQ disabled
-	STX XBUF	;save X
-	LDY #$10	;setup timeout loop
+	LDY #$60	;setup timeout loop
 	LDA #$FF
 	SEC
 GETBY3	SBC #1		;dec timeout count
-	BCC GETBY1
-GETBY2	PHA
-	TYA
-	PHA
-	LDY #_CONST
-	LDX #BIOS
-	JSR BDOS
-	TAX
-	PLA
-	TAY
-	PLA
-	BCS GETBY3	;C=1 no chr received
-	TXA		;C=0 & CHR in A
-	LDX XBUF
-	RTS
-
-GETBY1	DEY		;dec high byte timeout count
+	BCS GETBY2
 	SEC
-	BNE GETBY2
-	RTS		;C=1 timeout
+	DEY		;dec high byte timeout count
+	BEQ GETBY1
+GETBY2	PHA
+	LDA STAT_REG
+	AND #$08	; ACIA input register full?
+	BEQ GETBY4	; no, just exit
+	LDA DATA_REG	; yes, read character
+	CLC
+	TAY
+GETBY4	PLA
+	BCS GETBY3	;C=1 no chr received
+	TYA		;C=0 & CHR in A
+GETBY1	RTS		;C=1 timeout
 
 		
 PUT_CHR			;BIOS chr output
-	STX XBUF	;save X
-	LDY #_CHROUT
-	LDX #BIOS
-	JSR BDOS
-	LDX XBUF
+	PHA		; save character
+	LDA #$10
+PUTCH1	BIT STAT_REG	; ACIA output register empty?
+	BEQ PUTCH1	; no, check again.
+	PLA		; restore character
+	STA DATA_REG   	; write character to ACIA
 	RTS
 
 

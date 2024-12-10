@@ -12,7 +12,10 @@
 ;V1.6	08.05.24	IRQs shut down
 ;V1.7	17.05.24	switch to STD ROM routines
 ;V1.8	08.06.24	buffering SD_TYPE & IOBASE+1 corrected
-Version = $18
+;V1.9	13.06.24	calling SELDSK with undefined A could lead to crash
+;V2.0	18.06.24	SD read error recovery
+;V2.1	07.12.24	changes for ROM BIOS 1.1.4
+Version = $21
 
 
 ;Parameter
@@ -38,8 +41,9 @@ NUM32	= $F8     	;LBA vector to 1. Cluster of disc image
 
 BLKBUF	= $DC		;BLKBUF adr for SD	
 
-SD_TYPE	= $1A
+SD_TYPE	= $DB
 IOBASE	= $14
+CARD3BASE = $18
 PSTR	= $EA
 
 BLKB	= $600
@@ -78,6 +82,7 @@ HEXDIG	= $E09A		;print HEX in A
 PRTCHR	= $E052		;COUT
 CMDDEV	= $E0BA
 
+CMD_INIT = 0		;init SD card
 CMD_READ = 34		;load sector in LBA to (BLKBUF)
 
 ROM_MONITOR = $E000	;Monitor cold start
@@ -93,6 +98,8 @@ BOOT	LDA #BOOTM		;print boot message
 	STA SD_TYPB
 	LDA IOBASE+1		;save IOBASE high
 	STA IOBUF
+	LDA CARD3BASE+1		;save CARD3BASE high
+	STA CARD3BUF
 	LDY #3			;set LBA to current file
 BOOT3	LDA NUM32,Y
 	STA LBA,Y
@@ -122,12 +129,16 @@ BOOT1	JSR INCLBA		;load CCP from sector 1 = next sector
 	LDA #IMAGE		;A: in $00..$04, A=0
 	JSR MOUNT*3+BIOS	;mount A:
 	BCS B_ERR
+	LDA #0
 	JSR SELDSK*3+BIOS	;BIOS SELDSK command
 	LDY #17
 	LDA SD_TYPB
 	STA (DPH),Y		;save SD_TYPE to BIOS
 	INY
 	LDA IOBUF
+	STA (DPH),Y		;save IOBASE high to BIOS
+	INY
+	LDA CARD3BUF
 	STA (DPH),Y		;save IOBASE high to BIOS
 	JMP BIOS		;COLD BOOT
 
@@ -149,6 +160,7 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 
 SD_TYPB	DB 0
 IOBUF	DB 0
+CARD3BUF DB 0
 
 ;---  MESSAGES  -----------------------------
 
@@ -182,7 +194,10 @@ R_LBA	LDX #LBA		;read sector in LBA to (BLKBUF)
 	CLC
 	RTS
 
-R_LBA1	SEC			;Error
+R_LBA1	LDA #CMD_INIT		;on error retry
+	JSR CMDDEV
+	BCS R_LBA
+	SEC			;Error
 	RTS	
 
 

@@ -13,8 +13,9 @@
 ;V0.9	25.04.24	$FC & $FD buffered
 ;V1.0	29.04.24	$1A buffered
 ;V1.1	17.05.24	switch to STD ROM routines,CONST corrected
+;V1.2	07.12.24	changes for BIOS ROM V1.1.4
 
-VERSION	= $11		;VERSION NUMBER
+VERSION	= $12		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -27,14 +28,18 @@ DIRBFV	= $FC		;DIRBF-VECTOR
 BLKB	= $FA		;BIOS Block Pointer
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
-MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
-IOB	= $14
+MODE	= $DB		;SD Mode byte 0 byte mode; <>0 block mode
+IOB	= $14		;IOBASE
+FGCB	= $16		;FGCBASE
+CARD3B	= $18		;CARD3BASE
 TEMP	= $FC
 YSAV	= $FD
 
 ;SYSTEM CONSTANTS
 
-BLKBUF	=  $600		;default buffer
+BLKBUF	= $600		;default buffer
+
+FGCBASE	= $1000		;FGC card @ K4 = $1000
 
 CCP	= $CC00
 BEGIN	= $D800
@@ -55,9 +60,9 @@ SDC1_ID	= $24		; SD on I/O card
 
 ; Device Command Constants ****************************************************
 
-CMD_INIT = 0
+CMD_INIT = 0		;init SD card
 
-CMD_BOOT = 36
+CMD_BOOT = 36		;boot from SD
 CMD_READ_BUF = 37
 CMD_WRITE_BUF = 38
 
@@ -132,6 +137,7 @@ DPHA	DW DIRBF	;DISK PARAMETER HEADER
 	DB BATSIZ
 SD_TYPE	DB 0		;SD card type
 IOBASEH	DB 0		;IOBASE high byte
+CARD3BASEH DB 0		;CARD3BASE high byte
 
 BAT	DB %11110000	;Block Allocation Table Drive A-D
 	DS BATSIZ	;max. 1 page
@@ -459,10 +465,16 @@ PUSH_E1	LDX ZP_IOB,Y		;load page zero adr
 	STA ZP_BUF,Y		;and save it
 	DEY
 	BPL PUSH_E1
-	INY			;restore IOB
+	INY			;restore IOB & FGCB & CARD3B
 	STY IOB
+	STY FGCB
+	STY CARD3B
 	LDA IOBASEH
 	STA IOB+1
+	LDA #FGCBASE/256	;fix @ $1000
+	STA FGCB+1
+	LDA CARD3BASEH
+	STA CARD3B+1
 	LDY Y_BUF
 	PLA
 	RTS
@@ -485,8 +497,8 @@ PULL_E1	LDX ZP_IOB,Y		;load page zero adr
 	RTS
 
 
-ZP_IOB	DB $14,$15,$FD
-ZP_CELL DB $E3,$E2,$E1,$E0,$FC,$1A
+ZP_IOB	DB $14,$15,$16,$17,$18,$19,$F1,$FD
+ZP_CELL DB $E3,$E2,$E1,$E0,$FC,$DB
 ZP_BUF	DS ZP_BUF-ZP_IOB,0
 
 Y_BUF	DB 0

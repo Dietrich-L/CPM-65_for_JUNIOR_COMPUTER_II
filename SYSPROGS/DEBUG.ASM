@@ -8,11 +8,13 @@
 ;V1.7	18.02.23	error correction dump would not stop
 ;V1.8	08.08.23	QUIT restores original IRQ vetor
 ;V1.9	28.03.24	replaces IRQ routine, saves $F1 (destroyed by JC-II IRQ routine)
-VERSION	= $19
+;V2.0	15.11.24	version for ROM 1.1.4
+VERSION	= $20
 
 ;SYSTEM CONSTANTS
 
 DMA	= $FE
+DPH	= $F8
 FCB1	= $F6
 BDOS	= $F0
 INBUF	= $EC
@@ -23,10 +25,12 @@ ZA	= 2
 STOACC	= $1A77
 TPA	= $2000
 MEMTOP	= $B800
-TAPEIRQ_OFF = $EF00
 IRQ	= $1A78
 IRQUSR	= $1A7C
 IRQVECT	= $1A7E
+
+IER	= $1E		; Interrupt enable register VIA2
+IOBASE	= $14
 
 ;BIOS COMMANDS
 
@@ -659,24 +663,10 @@ REPEA5	LDA #EOL
 	RTS
 
 ;====== BREAK-ENTRY ============= 
-IRQ_NEW STA STOACC	; save current accumulator
-	PLA		; get current processor status in A
-	SEI
-	PHA		; and push it back to stack
-	AND #$10	; mask break flag
-	BNE USRBRK	; if break flag set, jump to user break handler
-	LDA STOACC
-	RTI
-
-USRBRK	LDA	STOACC
-	JMP	(IRQ)
-
 
 BREAK	STA ACCU
 	STY YREG
 	STX XREG
-	LDA F1BUF	;restore $F1
-	STA $F1
 	PLA
 	STA STATUS
 	PLA
@@ -741,9 +731,18 @@ BREAK8	LDA #0
 
 ;======  SUBROUTINES  ============== 
 
-INIT	LDA $F1		;save $F1
-	STA F1BUF
-	JSR TAPEIRQ_OFF
+INIT	LDA #TPA/256	;PC = TPA
+	STA PCH
+	LDA #TPA
+	STA PCL
+	LDA #0
+	STA IOBASE
+	LDY #18		;set IOBASE from BIOS
+	LDA (DPH),Y
+	STA IOBASE+1
+	LDY #IER	; select interrupt enable register
+	LDA #$7F
+	STA (IOBASE),Y	; disable all VIA2 interrupts
 	LDA IRQ
 	STA IRQBUF	;save IRQ vector
 	LDA IRQ+1
@@ -752,10 +751,6 @@ INIT	LDA $F1		;save $F1
 	STA IRQ
 	LDA #BREAK/256
 	STA IRQ+1
-	LDA #IRQ_NEW	;SET new IRQ VEKTOR
-	STA IRQVECT
-	LDA #IRQ_NEW/256
-	STA IRQVECT+1
 	LDX #3*MAXBNR
 	LDA #$FF
 INIT1	STA BTAB,X
@@ -2003,13 +1998,12 @@ FLAGNR	DB 0
 JMP_FLAG	DB 0
 
 HEX	DW 0
-PNTBUF	DW 0
+PNTBUF	DW TPA
 BEGAD	DW 0
 ENDAD	DW 0
 CURAD	DW TPA
 
 IRQBUF	DW 0
-F1BUF	DB 0
 
 SRCBUF	DS 16
 
