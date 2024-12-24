@@ -1,4 +1,4 @@
-;fig-FORTH   JC II Version for CCP at $CC00
+;fig-FORTH   JC II Version for CCP at $CC00 and FGC&ROM V1.1.4
 ;by D. Lausberg    (c) 1990
 ;V1.0	7.1.90
 ;V1.1  21.1.95		some improvements, debug code removed
@@ -20,7 +20,7 @@ BMAG	= SSIZE+4*NBUF
 
 ;--- System Addresses
 BOS	= $10
-TOS	= $C0
+TOS	= $B4
 N	= TOS+8
 IP	= N+8
 W	= IP+3
