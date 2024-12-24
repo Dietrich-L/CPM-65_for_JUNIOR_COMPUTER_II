@@ -1,0 +1,8 @@
+: X-MAS CR 12 0 do
+12 i - spaces I 1+ dup 0 do ." /" loop
+0 do ." \" loop cr
+loop 124 dup 2 0 do
+12 0 do ." ~" loop
+I 1 = 0= if 2 0 do emit loop then
+loop cr 12 spaces 2 0 do ." |"
+loop 12 spaces cr cr ;
