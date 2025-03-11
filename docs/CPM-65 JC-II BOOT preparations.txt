@@ -3,7 +3,7 @@ CPM-65 Bootsequence
 
 Preparations:
 1. Format a SD card with a MBR in FAT32 (preferred) or FAT16
-2. Load MKBOOT.BIN to memory via xmodem (Enter LM and select MKBOOT.BIN as file to be transfered in your xmodem application)
+2. Load MKBOOT.BIN to memory via xmodem (Enter LM and select MKBOOT.BIN as file to be transfered in your xmodem application - MKBOOT.BIN is in subdirectory JC][ Utils)
 3. execute MKBOOT.BIN by entering 2000G in the monitor and follow instructions
 4. Copy the CPM-65 BOOT.SYS, CPM-65.IMG and any other CPM-65 images to the root directory of the SD.Be aware - BOOT.SYS and all images must reside in the 1. directory cluster of the root directory. Thus having more than 60 files in the root directory should be avoided.
 5. Reset the JC ][. The BOOT.SYS will be executed ant offer the first 16 images for selection to boot. After a successful boot procedure, the system prompt A> will appear and off you go.
