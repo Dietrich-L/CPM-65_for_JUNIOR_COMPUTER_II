@@ -1,5 +1,5 @@
 ;BASIC.COM  Microsoft compatible 6502 BASIC
-;JC II version
+;JC II version adapted to VDU ROM Software
 
 ;D. Lausberg	(c) 1995
 ;V1.0	08.04.95
@@ -77,13 +77,13 @@ CUR_COL	= $7F		;CURSOR COLOUMN
 
 ;SYSTEM ADDRESSES
 
-TEMPX	= $D0
-TEMPY	= $D1
-BUFPNT	= $D2		;Pointer for disk buffer (=DMA)
-FLAG_8	= $D3		;Channel #8 Flag
-IN_DEV	= $D4		;Input device
-OUT_DEV	= $D5		;Output device
-DMABUF	= $D6		;original DMA page address
+TEMPX	= $C0
+TEMPY	= $C1
+BUFPNT	= $C2		;Pointer for disk buffer (=DMA)
+FLAG_8	= $C3		;Channel #8 Flag
+IN_DEV	= $C4		;Input device
+OUT_DEV	= $C5		;Output device
+DMABUF	= $C6		;original DMA page address
 BDOS	= $F0
 FCB1	= $F6
 FCB2	= $F4

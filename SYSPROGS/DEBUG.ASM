@@ -9,28 +9,29 @@
 ;V1.8	08.08.23	QUIT restores original IRQ vetor
 ;V1.9	28.03.24	replaces IRQ routine, saves $F1 (destroyed by JC-II IRQ routine)
 ;V2.0	15.11.24	version for ROM 1.1.4
-VERSION	= $20
+;V2.1	13.12.24	VDU driver adaptions
+VERSION	= $21
 
 ;SYSTEM CONSTANTS
 
 DMA	= $FE
+PNT	= $FA		;Used in some BIOS versions!
 DPH	= $F8
 FCB1	= $F6
 BDOS	= $F0
 INBUF	= $EC
 CCPV	= $E0
-PNT	= $D8
+
 SA	= 0
 ZA	= 2
-STOACC	= $1A77
 TPA	= $2000
 MEMTOP	= $B800
 IRQ	= $1A78
 IRQUSR	= $1A7C
 IRQVECT	= $1A7E
 
-IER	= $1E		; Interrupt enable register VIA2
-IOBASE	= $14
+;IER	= $1E		; Interrupt enable register VIA2
+;IOBASE	= $14
 
 ;BIOS COMMANDS
 
@@ -78,7 +79,7 @@ NOT_FND	= $86
 
 	ORG TPA
 
-;LOADER FOR DEBUG
+;--- LOADER FOR DEBUG ---
 
 INSTALL	LDX #BTAB-MEMTOP/256+1	;LENGTH IN PAGES
 	LDA #SOURCE
@@ -735,14 +736,6 @@ INIT	LDA #TPA/256	;PC = TPA
 	STA PCH
 	LDA #TPA
 	STA PCL
-	LDA #0
-	STA IOBASE
-	LDY #18		;set IOBASE from BIOS
-	LDA (DPH),Y
-	STA IOBASE+1
-	LDY #IER	; select interrupt enable register
-	LDA #$7F
-	STA (IOBASE),Y	; disable all VIA2 interrupts
 	LDA IRQ
 	STA IRQBUF	;save IRQ vector
 	LDA IRQ+1

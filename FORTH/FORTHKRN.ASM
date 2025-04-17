@@ -20,7 +20,7 @@ BMAG	= SSIZE+4*NBUF
 
 ;--- System Addresses
 BOS	= $10
-TOS	= $B4
+TOS	= $B0
 N	= TOS+8
 IP	= N+8
 W	= IP+3
