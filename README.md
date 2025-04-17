@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.1<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.3<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -106,7 +106,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
            <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BOOTSYS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.8<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.1<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BOOT program on SD, main directory<br>
@@ -151,7 +151,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">DEBUG<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.9<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.1<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Debugger,
                 8 breakpoints, stepping, disassembler,...<br>
@@ -275,7 +275,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
     <p><a title="Software List" a=""> -------------------- <br>
       </a></p>
     <p><a title="Software List" a="">The Junior Computer II port of CPM-65 is
-        now in V1.0 and reasonably stable. Please report errors and crashes in the ISSUE section <br>
+        now reasonably stable. Please report errors and crashes in the ISSUE section <br>
       </a></p>
     <p><a title="Software List" a="">The CPM-65 system itself has now seen more
         than 30 years of service. Currently there are no known errors. <br>
