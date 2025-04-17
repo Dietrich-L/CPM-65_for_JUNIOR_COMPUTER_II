@@ -1773,8 +1773,8 @@ INIT3	JSR SETFCB4	;load BASIC file from command line
 HEAP			;START OF BASIC'S RAM
 
 INIT	LDA #0		;BASIC INITIALIZATION ROUTINE
-	LDX #BDOS-1	;will be overwritten after startup
-INIT1	STA ZERO,X	;CLEAR PAGE 0
+	LDX #$B0		;will be overwritten after startup
+INIT1	STA ZERO,X	;CLEAR PAGE 0 $00 - $B0
 	DEX
 	BNE INIT1
 	CLD

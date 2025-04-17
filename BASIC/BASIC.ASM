@@ -77,13 +77,13 @@ CUR_COL	= $7F		;CURSOR COLOUMN
 
 ;SYSTEM ADDRESSES
 
-TEMPX	= $C0
-TEMPY	= $C1
-BUFPNT	= $C2		;Pointer for disk buffer (=DMA)
-FLAG_8	= $C3		;Channel #8 Flag
-IN_DEV	= $C4		;Input device
-OUT_DEV	= $C5		;Output device
-DMABUF	= $C6		;original DMA page address
+TEMPX	= $80
+TEMPY	= $81
+BUFPNT	= $82		;Pointer for disk buffer (=DMA)
+FLAG_8	= $83		;Channel #8 Flag
+IN_DEV	= $84		;Input device
+OUT_DEV	= $85		;Output device
+DMABUF	= $86		;original DMA page address
 BDOS	= $F0
 FCB1	= $F6
 FCB2	= $F4
