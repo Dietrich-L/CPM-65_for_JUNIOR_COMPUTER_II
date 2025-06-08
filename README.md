@@ -80,7 +80,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BDOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">2.4<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">2.5<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">CPM-65
                 BDOS<br>
