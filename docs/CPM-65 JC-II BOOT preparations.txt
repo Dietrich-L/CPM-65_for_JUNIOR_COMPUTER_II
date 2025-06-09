@@ -2,16 +2,16 @@ JUNIOR Computer II
 CPM-65 Bootsequence
 
 Preparations:
-1. Format a SD card with a MBR in FAT32 (preferred) or FAT16
+1. Format a SD card with a MBR in FAT32 (preferred) or FAT16/FAT12
 2. Load MKBOOT.BIN to memory via xmodem (Enter LM and select MKBOOT.BIN as file to be transfered in your xmodem application - MKBOOT.BIN is in subdirectory JC][ Utils)
 3. execute MKBOOT.BIN by entering 2000G in the monitor and follow instructions
-4. Copy the CPM-65 BOOT.SYS, CPM-65.IMG and any other CPM-65 images to the root directory of the SD.Be aware - BOOT.SYS and all images must reside in the 1. directory cluster of the root directory. Thus having more than 60 files in the root directory should be avoided.
-5. Reset the JC ][. The BOOT.SYS will be executed ant offer the first 16 images for selection to boot. After a successful boot procedure, the system prompt A> will appear and off you go.
+4. Copy the CPM-65 files BOOT.SYS, CPM-65.IMG and any other CPM-65 images to the root directory of the SD.Be aware - BOOT.SYS and all images must reside in the 1. directory cluster of the root directory. Thus having more than 60 files in the root directory should be avoided.
+5. Reset the JC ][. The BOOT.SYS will be executed and offer the first 16 images for selection to boot. After a successful boot procedure, the system prompt A> will appear and off you go.
 
 
 Boot sequence (BOOT.SYS):
-1. At first the MBR is loaded and partition 1 is selected for the boot process.
-2. The root directory of partition 1 is loaded. Currently BOOT.SYS can only load the first cluster of a FAT32 partition. This should be sufficient for all practical purposes.
+1. At first the MBR is loaded and a partition is selected for the boot process.
+2. The root directory of this partition is loaded. Currently BOOT.SYS can only load the first cluster of a FAT32 partition. This should be sufficient for all practical purposes.
 3. Look for files with exactly 1.048.576 bytes (=1 MB) in length and offer these as bootable images. Long filenames can be used, but only the short filenames will be displayed in the current version of BOOT.SYS
 4. Starting with the second sector of the selected image file CCP, BDOS and BIOS are loaded to their locatuions in memory. The CPM-65 image must contain the respective code in the correct sectors offset $000001 .. $00000B. It is assumed, that the disc image is not fragmented and stored in consecutive sectors on the SD. This should be the case, when using a newly formatted SD
 5. The LBA of sector $000000 of the image is then mounted into the BIOS image map as drive A:. More images can be mounted after booting with the utility SD-UTIL.
