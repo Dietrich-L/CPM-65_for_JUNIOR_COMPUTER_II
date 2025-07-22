@@ -1,0 +1,45 @@
+( VDU graphics test routines  )
+: wait-key key drop cls ;
+: help CLS ."   Junior Computer ][ Graphics Test Demo " CR CR
+    ."  shows lines, rectangles, square function, stars, " CR
+    ."  sinus wave and circles" CR CR
+    ."     hit any key after each picture"
+    wait-key ;
+: G_INIT help 4 scr-mode 50 50 move_to 13 P_COLOR seed ;
+: G_EXIT 3 scr-mode ;
+: choose rnd u* swap drop ;
+: ORIGIN 100 0 MOVE_TO ;
+
+0 variable CX   0 variable CY
+
+
+-->
+( Testroutinen )
+
+: lines 230 10 do I 10 / 20 + 70 move_to I 25 + 170 draw_line
+    10 +loop ;
+: rect 120 0 do I dup 20 + move_to I  50 + dup I 6 / +
+     draw_rect 10 +loop ;
+: square 100 -100 do I dup 8 / dup * I 4 mod abs + swap 120 +
+     put_pixel loop ;
+: stars 200 0 do 16 choose P_COLOR 212 choose 256 choose
+     100 0 do loop put_pixel loop ;
+: SINUS origin 100 255 DRAW_LINE origin 50 SIN_SCALE
+     256 0 do I 2 * sin scale 100 + I put_pixel loop ;
+: CONCENTRICS ( CX CY - ) CY ! CX !
+     100 20 do cy @ cx @ 360 0 I circle 20 +loop ;
+
+-->
+: Test G_Init lines wait-key 4 P_COLOR rect wait-key 7 P_COLOR
+       Square wait-key stars wait-key 1 P_COLOR SINUS wait-key
+       14 P_COLOR 105 122 Concentrics wait-key G_exit 0 BDOS ;
+
+decimal
+
+LATEST   12 +ORIGIN !
+HERE     30 +ORIGIN !
+
+;S
+
+
+                                                                                                                                                                                                       
