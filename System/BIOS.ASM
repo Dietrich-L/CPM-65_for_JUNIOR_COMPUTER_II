@@ -14,8 +14,10 @@
 ;V1.0	29.04.24	$1A buffered
 ;V1.1	17.05.24	switch to STD ROM routines,CONST corrected
 ;V1.2	07.12.24	changes for BIOS ROM V1.1.4
+;V1.3	13.12.24	changes for VDU ROM software
+;V1.4	10.06.25	CONST fixed, RDTIME, CMDDV added
 
-VERSION	= $12		;VERSION NUMBER
+VERSION	= $14		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -29,6 +31,7 @@ BLKB	= $FA		;BIOS Block Pointer
 DPHV	= $F8		;DPH-VECTOR
 JPBDOS	= $F0
 MODE	= $DB		;SD Mode byte 0 byte mode; <>0 block mode
+TICKCNT	= $DA		;Tick counter
 IOB	= $14		;IOBASE
 FGCB	= $16		;FGCBASE
 CARD3B	= $18		;CARD3BASE
@@ -37,9 +40,16 @@ YSAV	= $FD
 
 ;SYSTEM CONSTANTS
 
+T2CL	= $18
+IFR	= $1D
+IER	= $1E		;Interrupt enable register VIA2
+
 BLKBUF	= $600		;default buffer
 
 FGCBASE	= $1000		;FGC card @ K4 = $1000
+
+IRQUSR	= $1A7C
+IRQVECT	= $1A7E		;IRQ vector
 
 CCP	= $CC00
 BEGIN	= $D800
@@ -48,8 +58,9 @@ ROM_MONITOR = $E000	;Monitor cold start
 CGET = $E04D		;CGET
 ROM_CONIN = $E047	;CIN
 ROM_CONOUT = $E044	;BOUT
+ROM_READTIME = $E2DE
+CMDPDEV = $E0B7
 CMDDEV	= $E0BA
-OPEN_DEVICE = $E1AA
 
 ; Device IDs *******************************************************************
 
@@ -114,6 +125,8 @@ FBIOS	JMP BOOT		; 00
 	JMP GET_VERSION		; 0F
 	JMP ROM_MONITOR		; 10
 	JMP MOUNT		; 11
+	JMP RDTIME		; 12
+	JMP CMDDV		; 13
 
 ;========== DATA AREA =============
 ;--- Disk Image TABLE ---
@@ -161,35 +174,58 @@ BOOT	SEI		;no IRQ's allowed
 	STA JPBDOS+1
 	LDA #CCP/256
 	STA JPBDOS+2
+	LDA #CPMIRQ	;set CPM-65 IRQ vector to BIOS IRQ
+	STA IRQVECT
+	LDA #CPMIRQ/256
+	STA IRQVECT+1
+	LDY #18		;set IOBASE from BIOS
+	LDA (DPHV),Y
+	STA CPMIRQL+2	;patch IOBASE adr to CPMIRQ routine
+	STA CPMIRQS+2
+	LDA #$A0	;deactivate all VIA2 IRQs exept T2
+	LDY #IER
+	JSR CPMIRQS
 	LDA #0		;A: only
 	STA DRIVE	;SELECT BOOT DRIVE
 	LDX #$0E	;VIA BDOS
 	JSR JPBDOS
+	CLI
+	CLD
 	LDX #0 		;WARM BOOT
 	JMP JPBDOS
 
 
-WBOOT	SEI		;no IRQ's allowed
+WBOOT	CLI		;IRQ's allowed
+	CLD
 	LDA DRIVE	;SELECT DEFAULT DRIVE
 	JSR SELDSK
 	RTS
 
 
-CONST	JSR PUSHIOB
+CONST	LDA CHARBUF
+	BNE CONST1	;if there is no byte
+	JSR PUSHIOB	;then try to get one
 	JSR CGET
 	JSR PULLIOB
-	BCS CONST1
-	LDA #0
-	SEC
+	BCC CONST2
+	STA CHARBUF	;buffer byte in CHARBUF
+CONST1	CLC		;C=0, A = byte
 	RTS
 
-CONST1	CLC
+CONST2	LDA #0		;nothing there
+	SEC		;C=1, A=0
 	RTS
 
 
-CONIN	JSR PUSHIOB
+CONIN	LDA CHARBUF
+	BNE CONIN1
+	JSR PUSHIOB
 	JSR ROM_CONIN
 	JSR PULLIOB
+CONIN1	PHA
+	LDA #0
+	STA CHARBUF	;CHARBUF=0, A=chr
+	PLA
 	RTS
 
 
@@ -366,6 +402,79 @@ MOU_ERR	LDA #INVDRV		;invalid drive #
 	SEC
 	RTS
 
+
+RDTIME	PHA			;read RTC A/X/Y = hh/mm/ss
+	JSR PUSHIOB
+	PLA
+	JSR ROM_READTIME
+	PHA
+	TXA
+	PHA
+	JSR PULLIOB
+	PLA
+	TAX
+	PLA
+	CLC
+	RTS
+
+
+CMDDV	PHA			;send command to device
+	TAX
+	LDA 0,X			;cmd pointer for p.00 in Accu
+	ASL A
+	TAX
+	LDA CMDLIST,X		;set adr for CMD channnel
+	STA CMDJMP+1,X
+	LDA CMDLIST+1,X
+	STA CMDJMP+2,X
+	JSR PUSHIOB
+	PLA
+	TAX
+	LDA 1,X			;get A
+	PHA
+	LDY 3,X			;get Y
+	LDA 2,X			;get X
+	TAX
+	PLA
+CMDJMP	JSR CMDJMP		;self modifying code
+	JSR PULLIOB
+	RTS
+
+CMDLIST	DW CMDPDEV,CMDDEV	
+
+;====== CPM-65 IRQ ROUTINES =======
+
+CPMIRQ	PHA
+	TYA
+	PHA
+	LDY #IFR
+	JSR CPMIRQL		;LDA IFR
+	BPL CPMIRQ1
+	LDA #$4B
+	LDY #T2CL		;restart timer2
+	JSR CPMIRQS
+	LDA #$41
+	LDY #T2CL+1
+	JSR CPMIRQS
+	LDA TICKCNT		;dec TICKCNT to zero
+	BEQ CPMIRQ2
+	DEC TICKCNT
+CPMIRQ2 PLA
+	TAY
+	PLA
+	RTI
+
+CPMIRQ1	PLA			;no VIA2 IRQ
+	TAY
+	PLA
+	JMP (IRQUSR)		;standard IRQ routine
+
+CPMIRQL	LDA $FF00,Y
+	RTS
+
+CPMIRQS	STA $FF00,Y
+	RTS
+	
 ;====== SUBROUTINES =======
 
 SETLBA	LDX DRIVE
@@ -500,6 +609,8 @@ PULL_E1	LDX ZP_IOB,Y		;load page zero adr
 ZP_IOB	DB $14,$15,$16,$17,$18,$19,$F1,$FD
 ZP_CELL DB $E3,$E2,$E1,$E0,$FC,$DB
 ZP_BUF	DS ZP_BUF-ZP_IOB,0
+
+CHARBUF	DB 0			;chr buffer for console IO
 
 Y_BUF	DB 0
 	
