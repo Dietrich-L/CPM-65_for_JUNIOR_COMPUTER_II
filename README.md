@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.3<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.4<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
@@ -167,9 +167,9 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
               </span></td>
           </tr>
           <tr>
-            <td style="height: 28.8167px;"><span style="font-family: Courier New,Courier,monospace;">EDIT<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">EDIT<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.1<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.2<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">Simple
                 editor for text files &amp; FORTH screens<br>
@@ -196,7 +196,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">FORTH<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.6<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.7<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">FIG
                 FORTH including module for standalone applications<br>
