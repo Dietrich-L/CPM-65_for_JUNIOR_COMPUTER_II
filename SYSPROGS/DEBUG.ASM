@@ -10,7 +10,8 @@
 ;V1.9	28.03.24	replaces IRQ routine, saves $F1 (destroyed by JC-II IRQ routine)
 ;V2.0	15.11.24	version for ROM 1.1.4
 ;V2.1	13.12.24	VDU driver adaptions
-VERSION	= $21
+;V2.2	04.08.25	keep cursor blinking
+VERSION	= $22
 
 ;SYSTEM CONSTANTS
 
@@ -669,7 +670,10 @@ BREAK	STA ACCU
 	STY YREG
 	STX XREG
 	PLA
+	AND #%11101111	;clear BRK flag
 	STA STATUS
+	PHA		;and clear B flag in status register
+	PLP
 	PLA
 	STA PCL
 	PLA
