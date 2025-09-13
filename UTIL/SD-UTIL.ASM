@@ -6,8 +6,9 @@
 ;V1.3	06.03.24	code improvements and error corrections
 ;V1.4	17.05.24	switch to STD ROM routines and error corrections
 ;V1.5	07.06.24	sets IOBASE from BIOS
+;V1.6	04.09.25	display drives mounted
 
-VERSION	= $15
+VERSION	= $16
 
 ;SYSTEM CONSTANTS
 DMA	=  $FE
@@ -26,7 +27,6 @@ BUFBEG	=  $8000
 BIOSV	= $D800		;BIOS start adress
 
 CMDDEV	= $E0BA
-OPEN_DEVICE = $E1AA
 
 ; Device Command Constants ****************************************************
 
@@ -53,7 +53,7 @@ DIVH	= $10
 
 IOBASE	= $14		;I/O-card base address
 
-MODE	= $1A		;SD Mode byte 0 byte mode; <>0 block mode
+MODE	= $DB		;SD Mode byte 0 byte mode; <>0 block mode
 
 DRIVE	= $20
 ERRNO	= $21
@@ -64,8 +64,8 @@ DIR_NP	= $2C		;pointer to nr of dir entry
 DIR_FNP	= $2E		;dir filename pointer
 IMAGE	= $30		;image to be mounted - Drive, LBA
 CNT_I	= $35		;# images found
-CNT_Y	= $36		;counter
-
+CNT_X	= $36		;counter
+PNT_Y	= $37		;pointer
 
 
 ;--- constants ---
@@ -116,6 +116,7 @@ NO_SD	= $88
 NO_PART	= $89
 TM_IMG	= $8A		;too many image files
 NO_IMG	= $8B		;no image available
+IMG_NOT_FOUND = $8C	;image not found in mounted drives list
 
 	ORG TPA
 
@@ -144,7 +145,7 @@ INIT2	STA 0,X
 	BPL INIT2
 	LDY #18			;set IOBASE from BIOS
 	LDA (DPH),Y
-	STA IOBASE
+	STA IOBASE+1
 	LDA #BUFBEG		;SET BUFFER VECTOR
 	STA BUFFER
 	LDA #BUFBEG/256
@@ -153,7 +154,7 @@ INIT2	STA 0,X
 	STA DMA
 	LDA #DMABUF/256
 	STA DMA+1
-	JSR DRVPAR		;GET DRIVE PARAM'S
+	JSR DRVPAR		;SET DRIVE PARAM'S
 	JSR READS		;read sector 0
 	BCS INIT1
 	RTS
@@ -180,7 +181,7 @@ STATUS	LDA #STATM1		;DISPLAY STATUS
 	JSR PRTSTR
 	LDY #3
 STATUS1	LDA SEC,Y
-	JSR PRTHEX		;PRINT HEX VALUE
+	JSR PRTHEX		;PRINT Sector #
 	DEY
 	BPL STATUS1
 	LDA #STATM3
@@ -188,7 +189,7 @@ STATUS1	LDA SEC,Y
 	JSR PRTSTR
 	LDY #3
 STATUS2	LDA LBA,Y
-	JSR PRTHEX		;PRINT HEX VALUE
+	JSR PRTHEX		;PRINT LBA #
 	DEY
 	BPL STATUS2
 	RTS
@@ -419,6 +420,7 @@ WRITES	JSR WRITE		;WRITE sector in SEC
 
 INFO	JSR SET_DIR_INFO	;set directory info parameters
 	BCS INFOX
+	JSR SET_IMG		;set loaded image table
 	JSR DISP_INFO		;display files in directory
 	BCC INFOX
 	CMP #EOF
@@ -454,7 +456,7 @@ MOUNT2	LDA IMG_LBA,Y		;set image data
 	INX
 	CPX #4
 	BCC MOUNT2
-MOUNT6	LDA #IMAGE
+MOUNTI	LDA #IMAGE
 	LDY #_MOUNT		;mount drive
 	JSR BIOSC
 MOUNTX	RTS
@@ -466,7 +468,7 @@ MOUNT4	LDA #NO_IMG
 MOUNT5	LDA IMAGE
 	ORA #$80		;set delete bit
 	STA IMAGE
-	BNE MOUNT6
+	BNE MOUNTI
 
 
 PUSH	LDA #0
@@ -687,6 +689,7 @@ DISFN1	LDY #0
 	LDA CNT_I
 	ASL A
 	ASL A
+	PHA			;save index
 	TAY
 	LDX #3
 	CLC
@@ -701,7 +704,20 @@ DISFN4	PLA
 	JSR PRTHEX		;MSB..LSB
 	DEY
 	BNE DISFN4
-	INC CNT_I
+	PLA			;A is pointer to IMG_LBA
+	JSR TST_DRV		;check if image is already mounted
+	BCS DISFN5
+	PHA			;save drive #
+	LDA #SPACE		;print 2 spaces
+	JSR PRTCHR
+	LDA #SPACE
+	JSR PRTCHR
+	PLA
+	ADC #'A			;convert to drive letter
+	JSR PRTCHR
+	LDA #':			;print X:
+	JSR PRTCHR
+DISFN5	INC CNT_I
 	LDA CNT_I
 	CMP #MAX_IMG
 	BCS DISFN2
@@ -788,6 +804,77 @@ SET_P2	LDA MINUS_2,Y
 	LDA #0
 	STA NDIR+1
 	RTS
+
+
+SET_IMG	LDA #0			;set loaded image table
+SETIMG1	PHA
+	ORA #%01000000		;get image data
+	STA IMAGE
+	JSR MOUNTI		;call BIOS MOUNT
+	BCS SETIMG2
+	PLA
+	PHA
+	TAX
+	LDA #$FF		;set IMD_STAT,X valid
+	STA IMG_STAT,X
+	TXA
+	ASL A			;*4
+	ASL A
+	TAY
+	LDX #1			;set image table of mounted drives
+SETIMG3	LDA IMAGE,X
+	STA IMG_TAB,Y
+	INY
+	INX
+	CPX #5			;last byte?
+	BCC SETIMG3
+	PLA
+SETIMG4	ADC #0			;+1
+	CMP #MAXDRV		;last drive reached?
+	BCC SETIMG1
+	CLC			;finished
+	RTS
+
+SETIMG2	PLA			;no image mounted
+	TAX
+	LDA #0			;set table entry invalid
+	STA IMG_STAT,X
+	TXA
+	SEC			;C=1!
+	BCS SETIMG4
+
+
+TST_DRV	LDX #0			;test for image assign to drive
+	STX MCNT		;drive counter
+	STX CNT_X		;IMG_TAB index
+	STA PNT_Y		;save IMG_LBA pointer
+TSTDRV2	LDX MCNT
+	LDA IMG_STAT,X
+	BEQ TSTDRV1
+	LDX CNT_X
+	LDY PNT_Y		;load IMG_LBA pointer
+TSTDRV3	LDA IMG_LBA,Y		;get LBA image byte
+	CMP IMG_TAB,X		;compare with mounted LBA byte
+	BNE TSTDRV1
+	INX			;next byte
+	INY
+	TYA
+	AND #%00000011
+	BNE TSTDRV3
+	LDA MCNT		;drive found
+	CLC
+	RTS
+
+TSTDRV1	INC MCNT		;no match
+	LDA CNT_X		;inc tab index=x by 4
+	CLC
+	ADC #4
+	STA CNT_X
+	CMP #4*4
+	BCC TSTDRV2
+	LDA #IMG_NOT_FOUND
+	RTS
+
 
 
 MUL_SPC	LDY SEC_CLUS		;N32 * SEC_CLUS
@@ -1086,30 +1173,30 @@ SD_WRE	RTS
 
 ;====== SUBROUTINES =======
 
-SETLBA	LDY #3		;LBA = SEC/2
+SETLBA	LDX #3			;LBA = SEC/2
 	CLC
-SETLBA0	LDA SEC,Y	;SEC/2
+SETLBA0	LDA SEC,X		;SEC/2
 	ROR A
-	STA LBA,Y
-	DEY
+	STA LBA,X
+	DEX
 	BPL SETLBA0
-	LDA #$40	;set mode byte
+	LDA #$40		;set mode byte
 	STA MODE
 	CLC
 	RTS
 
 
-CHKBLK	LDY #3		;CHECK IF BLK IN BUFFER VALID
-CHKBLK2	LDA LBA,Y	;C=1 invalid
+CHKBLK	LDY #3			;CHECK IF BLK IN BUFFER VALID
+CHKBLK2	LDA LBA,Y		;C=1 invalid
 	CMP LBA_B,Y
-	BNE CHKBL1
+	BNE CHKBLK1
 	DEY
 	BPL CHKBLK2
 	LDA LBA_F
 	ASL A
 	RTS
 
-CHKBL1	SEC
+CHKBLK1	SEC
 	RTS
 
 
@@ -1271,6 +1358,7 @@ ERRTAB	DB $F9,$01,'Invalid Drive',EOT
 	DB $D9,$02,'Invalid FCB',EOT
 	DB $D8,$82,'Disk full',EOT
 	DB $D6,$82,'File is R/O',EOT
+	DB $8C,$10,'no mounted drive found',EOT
 	DB $8B,$10,'no image available',EOT
 	DB $8A,$10,'too many IMG files',EOT
 	DB $89,$10,'no partition found',EOT
@@ -1298,6 +1386,9 @@ MINUS_2	DB $FE,$FF,$FF,$FF	;-2
 LBA	DS 4,0		;LSB ... MSB
 LBA_B	DS 4,$FF
 LBA_F	DB $00		;LBA FLAG BIT7 = dirty
+
+IMG_TAB DS 4*4,0	;mounted image LBAs
+IMG_STAT DS 4,0		;mounted image status bytes
 
 BASE	DS 4,0		;LBA of 1. dir sector/1. data sector - 2 cluster
 NFAT	DB 0
