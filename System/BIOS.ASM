@@ -16,8 +16,9 @@
 ;V1.2	07.12.24	changes for BIOS ROM V1.1.4
 ;V1.3	13.12.24	changes for VDU ROM software
 ;V1.4	10.06.25	CONST fixed, RDTIME, CMDDV added
+;V1.5	04.09.25	MOUNT expanded for Get IMG_LBA
 
-VERSION	= $14		;VERSION NUMBER
+VERSION	= $15		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -366,10 +367,13 @@ GET_VERSION			;GET VERSION NUMBER
 
 MOUNT	TAX			;mount disk image on SD
 	LDA 0,X			;load drive to be mounted
-	BMI MOUNT2
+	AND #$3F
 	CMP #4			;max A: - D:
 	BCS MOU_ERR
-	TAY
+	LDA 0,X
+	CMP #$40		;bit 6 or 7 set?
+	BCS MOUNT2
+	TAY			;mount disc image
 	LDA #$FF		;set drive byte as valid
 	STA IMGSTAT,Y
 	TYA
@@ -389,10 +393,30 @@ MOUNT1	SEC
 	CLC
 	RTS
 
-MOUNT2	AND #$7F		;dismount drive
-	CMP #4			;max A: - D:
-	BCS MOU_ERR
+MOUNT2	CMP #$80		;check for bit 7
+	AND #$3F		;clear flag bits
+	BCS MOUNT3
 	TAY
+	LDA IMGSTAT,Y		;LBA invalid
+	BEQ MOU_ERR
+	TYA			;report LBA mounted
+	ASL A			;*4
+	ASL A
+	TAY
+	LDA #4			;4 bytes LBA
+MOUNT4	SEC
+	PHA
+	INX
+	LDA IMGTAB,Y		;copy LBA block 0
+	STA 0,X
+	INY
+	PLA
+	SBC #1
+	BNE MOUNT4
+	CLC
+	RTS
+
+MOUNT3	TAY			;dismount drive
 	LDA #$00		;set drive byte as invalid
 	STA IMGSTAT,Y
 	CLC
