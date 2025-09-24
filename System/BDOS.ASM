@@ -15,7 +15,7 @@
 ;V2.2	01.06.21	large drive support (SCSI)
 ;V2.3	11.06.22	BDOS0D corrected, RUBOUT added
 ;V2.4	06.11.23	BDOS R/W corrected
-;V2.5	04.06.25	BDOS0A line input editor
+;V2.5	04.06.25	BDOS0A line input editor, CLS check removed, -> is $15
 
 VERSION	= $25
 ;=====================================
@@ -84,7 +84,8 @@ CR	= $0D
 LF	= $0A
 BREAK	= $03		;CONTROL-C
 BS	= $08		;BACKSPACE
-HT	= $09		;HTAB
+TAB	= $09		;TAB
+HT	= $15		;->
 CTRLP	= $10
 CTRLS	= $13
 RUBOUT	= $7F
@@ -648,18 +649,7 @@ CHROUT	BIT STATUS	;TESTE ^P-FLAG
 	PHA
 	JSR LIST
 	PLA
-CHROU1	PHA
-	JSR CONOUT
-	PLA		;Check for CLS
-	CMP #CLS
-	BNE CHROUTX
-	LDX #67
-CHROUT4	LDA #$FF	;wait 120 ms
-CHROUT3	SEC
-	SBC #1
-	BCS CHROUT3
-	DEX
-	BNE CHROUT4
+CHROU1	JSR CONOUT
 CHROUTX	RTS
 
 
@@ -691,7 +681,7 @@ TSTCH2	CMP #BREAK
 TSTCH3	LDA #$40	;SET ^S-BIT
 	BNE TSTCH4
 
-CCODE	DB CR,LF,BS,HT,CLS,CTRLA,CTRLS,CTRLD,CTRLF
+CCODE	DB CR,LF,BS,HT,TAB,CLS,CTRLA,CTRLS,CTRLD,CTRLF
 CCODEX			;valid control chrs
 
 
