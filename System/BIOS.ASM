@@ -17,8 +17,9 @@
 ;V1.3	13.12.24	changes for VDU ROM software
 ;V1.4	10.06.25	CONST fixed, RDTIME, CMDDV added
 ;V1.5	04.09.25	MOUNT expanded for Get IMG_LBA
+;V1.6	27.11.25	IRQ routine ROM independent
 
-VERSION	= $15		;VERSION NUMBER
+VERSION	= $16		;VERSION NUMBER
 
 ;FORMAT	SD	1024 KBYTES/DISK
 
@@ -49,6 +50,9 @@ BLKBUF	= $600		;default buffer
 
 FGCBASE	= $1000		;FGC card @ K4 = $1000
 
+STOACC	= $1A77		
+
+BRKUSR	= $1A78
 IRQUSR	= $1A7C
 IRQVECT	= $1A7E		;IRQ vector
 
@@ -62,6 +66,7 @@ ROM_CONOUT = $E044	;BOUT
 ROM_READTIME = $E2DE
 CMDPDEV = $E0B7
 CMDDEV	= $E0BA
+ROMIRQ	= $F315
 
 ; Device IDs *******************************************************************
 
@@ -491,7 +496,17 @@ CPMIRQ2 PLA
 CPMIRQ1	PLA			;no VIA2 IRQ
 	TAY
 	PLA
-	JMP (IRQUSR)		;standard IRQ routine
+	STA STOACC		; save current accumulator
+	PLA			; get current processor status in A
+	PHA			; and push it back to stack
+	AND #$10		; mask break flag
+	BNE USRBREAK	; if break flag set, jump to user break handler
+	LDA STOACC
+	JMP (IRQUSR)	; else jump to user IRQ routine
+
+USRBREAK
+	LDA STOACC
+	JMP (BRKUSR)
 
 CPMIRQL	LDA $FF00,Y
 	RTS
