@@ -89,7 +89,7 @@ The Disc format is 128 tracks/ 32 sectors/ 256 byte/sector. <br>It is defined in
           <tr>
             <td><span style="font-family: Courier New,Courier,monospace;">BIOS<br>
               </span></td>
-            <td><span style="font-family: Courier New,Courier,monospace;">1.5<br>
+            <td><span style="font-family: Courier New,Courier,monospace;">1.6<br>
               </span></td>
             <td><span style="font-family: Courier New,Courier,monospace;">JC II
                 CPM-65 BIOS</span></td>
